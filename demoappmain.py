@@ -2,6 +2,8 @@ from PyQt6 import QtWidgets
 from PyQt6.QtCore import Qt
 import demoapp
 import sys
+import csv
+import pandas
 
 class customTab(QtWidgets.QWidget):
     #def __init__(self, main_app):
@@ -108,12 +110,23 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
     
     def fileOpen(self):
-        file = QtWidgets.QFileDialog.getOpenFileName(self.currentTab,"","","Text Files (*.txt)")
+        file = QtWidgets.QFileDialog.getOpenFileName(self.currentTab,"","","All files (*.*);;Text Files (*.txt,);;CSV Files (*.csv)")
         filename = file[0]
-        with open(filename,"r") as data:
-            lines = data.read()
-            self.changeCurrentTab()
-            self.currentWidget.textOutput.append(lines)
+        if filename != "":
+            if filename.endswith(".txt"):
+                with open(filename,"r") as data:
+                    lines = data.read()
+                    self.changeCurrentTab()
+                    self.currentWidget.textOutput.append(lines)
+            elif filename.endswith(".csv"):
+                with open(filename,"r") as data:
+                    csvreader = csv.reader(data)
+                    headers = []
+                    headers = next(csvreader)
+                    df = pandas.read_csv(filename,usecols=headers)
+                    #self.currentWidget.textOutput.append(df)
+
+            
 
     def closeTab(self,index):
         self.tabWidget.removeTab(index)
