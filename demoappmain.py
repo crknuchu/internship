@@ -88,12 +88,27 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.addNewTabButton = QtWidgets.QPushButton()
         self.addNewTabButton.setText("+")
         self.tabWidget.setCornerWidget(self.addNewTabButton)
+        self.currentWidget = self.tabWidget.currentWidget()
 
         #tab0 = customTab(main_app=self)
         self.addNewTab()
 
         self.addNewTabButton.pressed.connect(self.addNewTab)
         self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
+        self.actionOpen.triggered.connect(self.fileOpen)
+        self.tabWidget.currentChanged.connect(self.changeCurrentTab)
+
+    def changeCurrentTab(self):
+        self.currentWidget = self.tabWidget.currentWidget()
+
+    
+    def fileOpen(self):
+        file = QtWidgets.QFileDialog.getOpenFileName(self.currentTab,"","","Text Files (*.txt)")
+        filename = file[0]
+        with open(filename,"r") as data:
+            lines = data.read()
+            self.changeCurrentTab()
+            self.currentWidget.textOutput.append(lines)
 
     def closeTab(self,index):
         self.tabWidget.removeTab(index)
@@ -101,6 +116,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def addNewTab(self):
         self.currentTab = customTab()
         self.tabWidget.addTab(self.currentTab,"New Tab")
+        self.tabWidget.setCurrentWidget(self.currentTab)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
