@@ -14,6 +14,14 @@ class customTab(QtWidgets.QWidget):
 
         self.textInput.returnPressed.connect(lambda: self.returnPressed(self.textInput.text()))
         self.clearButton.pressed.connect(self.clearPressed)
+        self.checkBox.toggled.connect(self.disableDropDownMenu)
+
+    def disableDropDownMenu(self):
+        #disables and enables the drop-down menu
+        if self.dropDownMenu.isEnabled():
+            self.dropDownMenu.setEnabled(False)
+        else:
+            self.dropDownMenu.setEnabled(True)
 
     def clearPressed(self):
         self.textOutput.clear()
@@ -32,9 +40,13 @@ class customTab(QtWidgets.QWidget):
         self.clearButton.setText("Clear")
         self.clearButton.setEnabled(False)
         self.dropDownMenu = QtWidgets.QComboBox()
-        self.dropDownMenu.addItem("temp")
+        self.dropDownMenu.addItem("lorem")
+        self.dropDownMenu.addItem("ipsum")
+        self.dropDownMenu.addItem("dolor")
+        self.dropDownMenu.addItem("sit")
+        self.dropDownMenu.addItem("amet")
         self.checkBox = QtWidgets.QCheckBox()
-        self.checkBox.setText("temp")
+        self.checkBox.setText("Disable Drop-down Menu")
 
     def addWidgetsToLayout(self):
         """
