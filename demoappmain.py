@@ -15,6 +15,11 @@ class customTab(QtWidgets.QWidget):
         self.textInput.returnPressed.connect(lambda: self.returnPressed(self.textInput.text()))
         self.clearButton.pressed.connect(self.clearPressed)
         self.checkBox.toggled.connect(self.disableDropDownMenu)
+        self.dropDownMenu.textActivated.connect(lambda string: self.dropDownMenuActivated(string))
+
+    def dropDownMenuActivated(self,string):
+        self.textOutput.append(string)
+        self.clearButton.setEnabled(True)
 
     def disableDropDownMenu(self):
         #disables and enables the drop-down menu
