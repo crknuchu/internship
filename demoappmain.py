@@ -34,7 +34,7 @@ class customTab(QtWidgets.QWidget):
         self.clearButton.setEnabled(True)
 
     def createWidgets(self):
-        #creates all the widgets inside customTab
+        #creates all the widgets inside customTab widget
         self.textOutput = QtWidgets.QTextEdit()
         self.textOutput.setReadOnly(True)
         self.textInput = QtWidgets.QLineEdit()
