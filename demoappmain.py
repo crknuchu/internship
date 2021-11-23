@@ -72,6 +72,7 @@ class customTab(QtWidgets.QWidget):
         self.inputLayoutRight.addWidget(self.dropDownMenu)
         self.inputLayoutRight.addWidget(self.checkBox) 
 
+
         
 
     
@@ -83,6 +84,10 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
         self.tabWidget.removeTab(1) #remove the 2 default tabs from qt designer
         self.tabWidget.removeTab(0)
+        self.tabWidget.setTabsClosable(True)
+        self.addNewTabButton = QtWidgets.QPushButton()
+        self.addNewTabButton.setText("+")
+        self.tabWidget.setCornerWidget(self.addNewTabButton)
 
         #tab0 = customTab(main_app=self)
         tab0 = customTab()
