@@ -2,6 +2,8 @@ from PyQt6 import QtWidgets
 import demoapp
 import sys
 
+#add customTab
+
 class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
