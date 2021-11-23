@@ -90,8 +90,13 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.setCornerWidget(self.addNewTabButton)
 
         #tab0 = customTab(main_app=self)
-        tab0 = customTab()
-        self.tabWidget.addTab(tab0,"new tab")
+        self.addNewTab()
+
+        self.addNewTabButton.pressed.connect(self.addNewTab)
+
+    def addNewTab(self):
+        self.currentTab = customTab()
+        self.tabWidget.addTab(self.currentTab,"New Tab")
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
