@@ -13,17 +13,24 @@ class customTab(QtWidgets.QWidget):
         self.addWidgetsToLayout()
 
         self.textInput.returnPressed.connect(lambda: self.returnPressed(self.textInput.text()))
+        self.clearButton.pressed.connect(self.clearPressed)
+
+    def clearPressed(self):
+        self.textOutput.clear()
+        self.clearButton.setEnabled(False)
 
     def returnPressed(self,string):
         #appends text from inputText to outputText when enter is pressed
         self.textOutput.append(string)
         self.textInput.clear()
+        self.clearButton.setEnabled(True)
 
     def createWidgets(self):
         self.textOutput = QtWidgets.QTextEdit()
         self.textInput = QtWidgets.QLineEdit()
         self.clearButton = QtWidgets.QPushButton()
         self.clearButton.setText("Clear")
+        self.clearButton.setEnabled(False)
         self.dropDownMenu = QtWidgets.QComboBox()
         self.dropDownMenu.addItem("temp")
         self.checkBox = QtWidgets.QCheckBox()
