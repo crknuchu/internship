@@ -4,14 +4,20 @@ import demoapp
 import sys
 
 class customTab(QtWidgets.QWidget):
+    #def __init__(self, main_app):
     def __init__(self):
         super().__init__()
     
+        #self.main_app = main_app
         self.createWidgets()        
         self.addWidgetsToLayout()
 
+        self.textInput.returnPressed.connect(lambda: self.enterPressed(self.textInput.text()))
+
+    def enterPressed(self,string):
+        print(string)
+
     def createWidgets(self):
-        self.tablayout = QtWidgets.QGridLayout(self)
         self.textOutput = QtWidgets.QTextEdit()
         self.textInput = QtWidgets.QLineEdit()
         self.clearButton = QtWidgets.QPushButton()
@@ -22,17 +28,28 @@ class customTab(QtWidgets.QWidget):
         self.checkBox.setText("temp")
 
     def addWidgetsToLayout(self):
-        self.tablayout.addWidget(self.textOutput,0,0,1,2)
-        self.tablayout.addWidget(self.clearButton,1,0)
-        self.tablayout.addWidget(self.textInput,1,1)
-        self.tablayout.addWidget(self.dropDownMenu,2,0)
-        self.tablayout.addWidget(self.checkBox,2,1)    
-    
-        #self.tablayout.addWidget(self.textOutput)
-        #self.tablayout.addWidget(self.textInput)
-        #self.tablayout.addWidget(self.clearButton)
-        #self.tablayout.addWidget(self.dropDownMenu)
-        #self.tablayout.addWidget(self.checkBox) 
+        """
+        #self.tablayout.addWidget(self.textOutput,0,0,1,2)
+        #self.tablayout.addWidget(self.clearButton,1,0)
+        #self.tablayout.addWidget(self.textInput,1,1)
+        #self.tablayout.addWidget(self.dropDownMenu,2,0)
+        #self.tablayout.addWidget(self.checkBox,2,1)    
+        """
+        self.tablayout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.Direction.BottomToTop,self)
+        self.layout1 = QtWidgets.QVBoxLayout() 
+        self.layout2 = QtWidgets.QHBoxLayout() 
+        self.layout3 = QtWidgets.QHBoxLayout()
+        self.tablayout.addLayout(self.layout1)
+        self.layout1.addLayout(self.layout2)
+        self.layout1.addLayout(self.layout3)
+
+        self.tablayout.addWidget(self.textOutput)
+
+        self.layout2.addWidget(self.clearButton)
+        self.layout2.addWidget(self.textInput)        
+        
+        self.layout3.addWidget(self.dropDownMenu)
+        self.layout3.addWidget(self.checkBox) 
 
         
 
@@ -46,6 +63,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.removeTab(1) #remove the 2 default tabs from qt designer
         self.tabWidget.removeTab(0)
 
+        #tab0 = customTab(main_app=self)
         tab0 = customTab()
         self.tabWidget.addTab(tab0,"new tab")
 
