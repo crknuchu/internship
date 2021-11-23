@@ -35,6 +35,7 @@ class customTab(QtWidgets.QWidget):
 
     def createWidgets(self):
         self.textOutput = QtWidgets.QTextEdit()
+        self.textOutput.setReadOnly(True)
         self.textInput = QtWidgets.QLineEdit()
         self.clearButton = QtWidgets.QPushButton()
         self.clearButton.setText("Clear")
@@ -56,21 +57,18 @@ class customTab(QtWidgets.QWidget):
         #self.tablayout.addWidget(self.dropDownMenu,2,0)
         #self.tablayout.addWidget(self.checkBox,2,1)    
         """
-        self.tablayout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.Direction.BottomToTop,self)
-        self.layout1 = QtWidgets.QVBoxLayout() 
-        self.layout2 = QtWidgets.QHBoxLayout() 
-        self.layout3 = QtWidgets.QHBoxLayout()
-        self.tablayout.addLayout(self.layout1)
-        self.layout1.addLayout(self.layout2)
-        self.layout1.addLayout(self.layout3)
-
-        self.tablayout.addWidget(self.textOutput)
-
-        self.layout2.addWidget(self.clearButton)
-        self.layout2.addWidget(self.textInput)        
-        
-        self.layout3.addWidget(self.dropDownMenu)
-        self.layout3.addWidget(self.checkBox) 
+        self.tabLayout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.Direction.BottomToTop,self)
+        self.inputLayout = QtWidgets.QVBoxLayout() 
+        self.inputLayoutLeft = QtWidgets.QHBoxLayout() 
+        self.inputLayoutRight = QtWidgets.QHBoxLayout()
+        self.tabLayout.addLayout(self.inputLayout)
+        self.inputLayout.addLayout(self.inputLayoutLeft)
+        self.inputLayout.addLayout(self.inputLayoutRight)
+        self.tabLayout.addWidget(self.textOutput)
+        self.inputLayoutLeft.addWidget(self.clearButton)
+        self.inputLayoutLeft.addWidget(self.textInput)        
+        self.inputLayoutRight.addWidget(self.dropDownMenu)
+        self.inputLayoutRight.addWidget(self.checkBox) 
 
         
 
