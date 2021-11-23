@@ -34,6 +34,7 @@ class customTab(QtWidgets.QWidget):
         self.clearButton.setEnabled(True)
 
     def createWidgets(self):
+        #creates all the widgets inside customTab
         self.textOutput = QtWidgets.QTextEdit()
         self.textOutput.setReadOnly(True)
         self.textInput = QtWidgets.QLineEdit()
@@ -50,6 +51,7 @@ class customTab(QtWidgets.QWidget):
         self.checkBox.setText("Disable Drop-down Menu")
 
     def addWidgetsToLayout(self):
+        #adds widgets to customTab
         """
         #self.tablayout.addWidget(self.textOutput,0,0,1,2)
         #self.tablayout.addWidget(self.clearButton,1,0)
