@@ -93,6 +93,10 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.addNewTab()
 
         self.addNewTabButton.pressed.connect(self.addNewTab)
+        self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
+
+    def closeTab(self,index):
+        self.tabWidget.removeTab(index)
 
     def addNewTab(self):
         self.currentTab = customTab()
