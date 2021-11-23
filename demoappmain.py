@@ -12,10 +12,12 @@ class customTab(QtWidgets.QWidget):
         self.createWidgets()        
         self.addWidgetsToLayout()
 
-        self.textInput.returnPressed.connect(lambda: self.enterPressed(self.textInput.text()))
+        self.textInput.returnPressed.connect(lambda: self.returnPressed(self.textInput.text()))
 
-    def enterPressed(self,string):
-        print(string)
+    def returnPressed(self,string):
+        #appends text from inputText to outputText when enter is pressed
+        self.textOutput.append(string)
+        self.textInput.clear()
 
     def createWidgets(self):
         self.textOutput = QtWidgets.QTextEdit()
