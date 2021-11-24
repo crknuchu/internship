@@ -1,5 +1,6 @@
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import Qt
+from pandas.io.pytables import dropna_doc
 import demoapp
 import sys
 import csv
@@ -120,10 +121,19 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
                     self.currentWidget.textOutput.append(lines)
             elif filename.endswith(".csv"):
                 with open(filename,"r") as data:
+                    self.changeCurrentTab()
                     csvreader = csv.reader(data)
                     headers = []
                     headers = next(csvreader)
                     df = pandas.read_csv(filename,usecols=headers)
+
+                    for colname in df:
+                        col = df[colname].tolist()
+                        strints = [str(int) for int in col]
+                        str1 = ", "
+                        string = colname + ": " + str1.join(strints)
+                        self.currentWidget.textOutput.append(string)
+
                     #self.currentWidget.textOutput.append(df)
 
             
