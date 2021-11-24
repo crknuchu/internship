@@ -1,7 +1,10 @@
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import Qt
+from pandas.io.pytables import dropna_doc
 import demoapp
 import sys
+import csv
+import pandas
 
 class customTab(QtWidgets.QWidget):
     #def __init__(self, main_app):
@@ -108,12 +111,23 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
     
     def fileOpen(self):
-        file = QtWidgets.QFileDialog.getOpenFileName(self.currentTab,"","","Text Files (*.txt)")
+        file = QtWidgets.QFileDialog.getOpenFileName(self.currentTab,"","","All files (*.*);;Text Files (*.txt,);;CSV Files (*.csv)")
         filename = file[0]
-        with open(filename,"r") as data:
-            lines = data.read()
+        if filename != "": #if user doesn't select a file, the dialog returns an empty string
             self.changeCurrentTab()
-            self.currentWidget.textOutput.append(lines)
+            if filename.endswith(".txt"):
+                with open(filename,"r") as data:
+                    lines = data.read()
+                    self.currentWidget.textOutput.append(lines)
+            elif filename.endswith(".csv"):
+                df = pandas.read_csv(filename)
+                for columnName in df:
+                    column = df[columnName].tolist()
+                    stringFromInts = [str(int) for int in column]
+                    string = columnName + ": " + ",".join(stringFromInts)
+                    self.currentWidget.textOutput.append(string)
+
+            
 
     def closeTab(self,index):
         self.tabWidget.removeTab(index)
