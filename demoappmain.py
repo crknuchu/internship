@@ -120,18 +120,14 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
                     self.changeCurrentTab()
                     self.currentWidget.textOutput.append(lines)
             elif filename.endswith(".csv"):
-                with open(filename,"r") as data:
-                    self.changeCurrentTab()
-                    csvreader = csv.reader(data)
-                    headers = []
-                    headers = next(csvreader)
-                    df = pandas.read_csv(filename,usecols=headers)
-                    for columnName in df:
-                        column = df[columnName].tolist()
-                        stringFromInts = [str(int) for int in column]
-                        temp = ", "
-                        string = columnName + ": " + temp.join(stringFromInts)
-                        self.currentWidget.textOutput.append(string)
+                self.changeCurrentTab()
+                df = pandas.read_csv(filename)
+                for columnName in df:
+                    column = df[columnName].tolist()
+                    stringFromInts = [str(int) for int in column]
+                    temp = ", "
+                    string = columnName + ": " + temp.join(stringFromInts)
+                    self.currentWidget.textOutput.append(string)
 
             
 
