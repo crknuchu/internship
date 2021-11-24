@@ -113,7 +113,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def fileOpen(self):
         file = QtWidgets.QFileDialog.getOpenFileName(self.currentTab,"","","All files (*.*);;Text Files (*.txt,);;CSV Files (*.csv)")
         filename = file[0]
-        if filename != "":
+        if filename != "": #if user doesn't select a file, the dialog returns an empty string
             if filename.endswith(".txt"):
                 with open(filename,"r") as data:
                     lines = data.read()
@@ -126,15 +126,12 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
                     headers = []
                     headers = next(csvreader)
                     df = pandas.read_csv(filename,usecols=headers)
-
-                    for colname in df:
-                        col = df[colname].tolist()
-                        strints = [str(int) for int in col]
-                        str1 = ", "
-                        string = colname + ": " + str1.join(strints)
+                    for columnName in df:
+                        column = df[columnName].tolist()
+                        stringFromInts = [str(int) for int in column]
+                        temp = ", "
+                        string = columnName + ": " + temp.join(stringFromInts)
                         self.currentWidget.textOutput.append(string)
-
-                    #self.currentWidget.textOutput.append(df)
 
             
 
