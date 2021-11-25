@@ -1,9 +1,11 @@
 from PyQt6 import QtWidgets
+from matplotlib import pyplot
 from matplotlib.figure import Figure
 import demoapp
 import sys
 import pandas
 from matplotlib.backends.backend_qtagg import FigureCanvas,NavigationToolbar2QT
+import os
 
 class customTab(QtWidgets.QWidget):
     #def __init__(self, main_app):
@@ -145,14 +147,16 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         #plots data from filename
         df = pandas.read_csv(filename)
         ax = self.currentWidget.staticCanvas.figure.subplots()
-        ax.plot(df)
+        df.plot(x="godina",ax=ax)
+        ax.set_ylabel("BDP")
+        ax.set_title(os.path.basename(filename))
 
     def removeTextOutput(self):
         self.currentWidget.tabLayout.removeWidget(self.currentWidget.textOutput)
 
     def addCanvas(self):
         #adds canvas and navigation bar to current tab
-        self.currentWidget.staticCanvas = FigureCanvas(Figure(figsize=(2,2)))
+        self.currentWidget.staticCanvas = FigureCanvas(Figure())
         self.currentWidget.navBar = NavigationToolbar2QT(self.currentWidget.staticCanvas,self)
         self.currentWidget.tabLayout.addWidget(self.currentWidget.staticCanvas)
         self.currentWidget.tabLayout.addWidget(self.currentWidget.navBar)
