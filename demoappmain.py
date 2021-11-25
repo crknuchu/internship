@@ -118,6 +118,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
                 self.openCSVFile(filename)
     
     def openTxtFile(self,filename):
+        #removes canvas, adds textOutput and appends text from file to Output
         self.removeCanvas()
         self.addTextOutput()
         with open(filename,"r") as data:
@@ -125,19 +126,23 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
                     self.currentWidget.textOutput.append(lines)
     
     def addTextOutput(self):
+        #adds textOutput to current tab
         self.currentWidget.textOutput = QtWidgets.QTextEdit()
         self.currentWidget.tabLayout.addWidget(self.currentWidget.textOutput)
 
     def removeCanvas(self):
+        #removes canvas from current tab
         self.currentWidget.tabLayout.removeWidget(self.currentWidget.staticCanvas)
         self.currentWidget.tabLayout.removeWidget(self.currentWidget.navBar)
 
     def openCSVFile(self,filename):
+        #opens csv file and plots it on canvas
         self.removeTextOutput()
         self.addCanvas()
         self.plot(filename)
 
     def plot(self,filename):
+        #plots data from filename
         df = pandas.read_csv(filename)
         ax = self.currentWidget.staticCanvas.figure.subplots()
         ax.plot(df)
@@ -146,6 +151,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.currentWidget.tabLayout.removeWidget(self.currentWidget.textOutput)
 
     def addCanvas(self):
+        #adds canvas and navigation bar to current tab
         self.currentWidget.staticCanvas = FigureCanvas(Figure(figsize=(2,2)))
         self.currentWidget.navBar = NavigationToolbar2QT(self.currentWidget.staticCanvas,self)
         self.currentWidget.tabLayout.addWidget(self.currentWidget.staticCanvas)
