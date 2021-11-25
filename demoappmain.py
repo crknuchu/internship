@@ -42,10 +42,10 @@ class customTab(QtWidgets.QWidget):
 
     def createWidgets(self):
         #creates all the widgets inside customTab widget
-        #self.textOutput = QtWidgets.QTextEdit()
-        #self.textOutput.setReadOnly(True)
-        self.staticCanvas = FigureCanvas(Figure(figsize=(2,2)))
-        self.navBar = NavigationToolbar2QT(self.staticCanvas,self)
+        self.textOutput = QtWidgets.QTextEdit()
+        self.textOutput.setReadOnly(True)
+        #self.staticCanvas = FigureCanvas(Figure(figsize=(2,2)))
+        #self.navBar = NavigationToolbar2QT(self.staticCanvas,self)
         self.textInput = QtWidgets.QLineEdit()
         self.clearButton = QtWidgets.QPushButton()
         self.clearButton.setText("Clear")
@@ -68,9 +68,10 @@ class customTab(QtWidgets.QWidget):
         self.tabLayout.addLayout(self.inputLayout)
         self.inputLayout.addLayout(self.inputLayoutLeft)
         self.inputLayout.addLayout(self.inputLayoutRight)
-        #self.tabLayout.addWidget(self.textOutput)
-        self.tabLayout.addWidget(self.staticCanvas)
-        self.tabLayout.addWidget(self.navBar)
+        self.tabLayout.addWidget(self.textOutput)
+        #self.textOutput.setEnabled(False)
+        #self.tabLayout.addWidget(self.staticCanvas)
+        #self.tabLayout.addWidget(self.navBar)
         self.inputLayoutLeft.addWidget(self.clearButton)
         self.inputLayoutLeft.addWidget(self.textInput)        
         self.inputLayoutRight.addWidget(self.dropDownMenu)
@@ -112,17 +113,41 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         if filename != "": #if user doesn't select a file, the dialog returns an empty string
             self.changeCurrentTab()
             if filename.endswith(".txt"):
-                with open(filename,"r") as data:
+                self.openTxtFile(filename)
+            elif filename.endswith(".csv"):
+                self.openCSVFile(filename)
+    
+    def openTxtFile(self,filename):
+        with open(filename,"r") as data:
                     lines = data.read()
                     self.currentWidget.textOutput.append(lines)
-            elif filename.endswith(".csv"):
-                df = pandas.read_csv(filename)
-                for columnName in df:
-                    column = df[columnName].tolist()
-                    stringFromInts = [str(int) for int in column]
-                    string = columnName + ": " + ",".join(stringFromInts)
-                    self.currentWidget.textOutput.append(string)
 
+    def openCSVFile(self,filename):
+        """
+        df = pandas.read_csv(filename)
+        for columnName in df:
+            column = df[columnName].tolist()
+            stringFromInts = [str(int) for int in column]
+            string = columnName + ": " + ",".join(stringFromInts)
+            self.currentWidget.textOutput.append(string)
+        """
+        self.removeTextOutput()
+        self.addCanvas()
+        self.plot(filename)
+
+    def plot(self,filename):
+        df = pandas.read_csv(filename)
+        ax = self.currentWidget.staticCanvas.figure.subplots()
+        ax.plot(df)
+
+    def removeTextOutput(self):
+        self.currentWidget.tabLayout.removeWidget(self.currentWidget.textOutput)
+
+    def addCanvas(self):
+        self.currentWidget.staticCanvas = FigureCanvas(Figure(figsize=(2,2)))
+        self.currentWidget.navBar = NavigationToolbar2QT(self.currentWidget.staticCanvas,self)
+        self.currentWidget.tabLayout.addWidget(self.currentWidget.staticCanvas)
+        self.currentWidget.tabLayout.addWidget(self.currentWidget.navBar)
             
 
     def closeTab(self,index):

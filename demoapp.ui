@@ -58,6 +58,11 @@
     <string>Open</string>
    </property>
   </action>
+  <action name="actionOpen_CSV">
+   <property name="text">
+    <string>Open CSV</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

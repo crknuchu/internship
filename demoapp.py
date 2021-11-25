@@ -36,6 +36,8 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.actionOpen = QtGui.QAction(MainWindow)
         self.actionOpen.setObjectName("actionOpen")
+        self.actionOpen_CSV = QtGui.QAction(MainWindow)
+        self.actionOpen_CSV.setObjectName("actionOpen_CSV")
         self.menuFile.addAction(self.actionOpen)
         self.menubar.addAction(self.menuFile.menuAction())
 
@@ -49,6 +51,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Tab 2"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.actionOpen.setText(_translate("MainWindow", "Open"))
+        self.actionOpen_CSV.setText(_translate("MainWindow", "Open CSV"))
 
 
 if __name__ == "__main__":
