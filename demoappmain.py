@@ -1,10 +1,9 @@
 from PyQt6 import QtWidgets
-from PyQt6.QtCore import Qt
-from pandas.io.pytables import dropna_doc
+from matplotlib.figure import Figure
 import demoapp
 import sys
-import csv
 import pandas
+from matplotlib.backends.backend_qtagg import FigureCanvas,NavigationToolbar2QT
 
 class customTab(QtWidgets.QWidget):
     #def __init__(self, main_app):
@@ -43,8 +42,10 @@ class customTab(QtWidgets.QWidget):
 
     def createWidgets(self):
         #creates all the widgets inside customTab widget
-        self.textOutput = QtWidgets.QTextEdit()
-        self.textOutput.setReadOnly(True)
+        #self.textOutput = QtWidgets.QTextEdit()
+        #self.textOutput.setReadOnly(True)
+        self.staticCanvas = FigureCanvas(Figure(figsize=(2,2)))
+        self.navBar = NavigationToolbar2QT(self.staticCanvas,self)
         self.textInput = QtWidgets.QLineEdit()
         self.clearButton = QtWidgets.QPushButton()
         self.clearButton.setText("Clear")
@@ -60,13 +61,6 @@ class customTab(QtWidgets.QWidget):
 
     def addWidgetsToLayout(self):
         #adds widgets to customTab
-        """
-        #self.tablayout.addWidget(self.textOutput,0,0,1,2)
-        #self.tablayout.addWidget(self.clearButton,1,0)
-        #self.tablayout.addWidget(self.textInput,1,1)
-        #self.tablayout.addWidget(self.dropDownMenu,2,0)
-        #self.tablayout.addWidget(self.checkBox,2,1)    
-        """
         self.tabLayout = QtWidgets.QBoxLayout(QtWidgets.QBoxLayout.Direction.BottomToTop,self)
         self.inputLayout = QtWidgets.QVBoxLayout() 
         self.inputLayoutLeft = QtWidgets.QHBoxLayout() 
@@ -74,7 +68,9 @@ class customTab(QtWidgets.QWidget):
         self.tabLayout.addLayout(self.inputLayout)
         self.inputLayout.addLayout(self.inputLayoutLeft)
         self.inputLayout.addLayout(self.inputLayoutRight)
-        self.tabLayout.addWidget(self.textOutput)
+        #self.tabLayout.addWidget(self.textOutput)
+        self.tabLayout.addWidget(self.staticCanvas)
+        self.tabLayout.addWidget(self.navBar)
         self.inputLayoutLeft.addWidget(self.clearButton)
         self.inputLayoutLeft.addWidget(self.textInput)        
         self.inputLayoutRight.addWidget(self.dropDownMenu)
