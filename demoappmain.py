@@ -153,6 +153,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
     def removeTextOutput(self):
         self.currentWidget.tabLayout.removeWidget(self.currentWidget.textOutput)
+        self.currentWidget.textOutput.setVisible(False)
 
     def addCanvas(self):
         #adds canvas and navigation bar to current tab
