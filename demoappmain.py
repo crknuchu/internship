@@ -118,19 +118,21 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
                 self.openCSVFile(filename)
     
     def openTxtFile(self,filename):
+        self.removeCanvas()
+        self.addTextOutput()
         with open(filename,"r") as data:
                     lines = data.read()
                     self.currentWidget.textOutput.append(lines)
+    
+    def addTextOutput(self):
+        self.currentWidget.textOutput = QtWidgets.QTextEdit()
+        self.currentWidget.tabLayout.addWidget(self.currentWidget.textOutput)
+
+    def removeCanvas(self):
+        self.currentWidget.tabLayout.removeWidget(self.currentWidget.staticCanvas)
+        self.currentWidget.tabLayout.removeWidget(self.currentWidget.navBar)
 
     def openCSVFile(self,filename):
-        """
-        df = pandas.read_csv(filename)
-        for columnName in df:
-            column = df[columnName].tolist()
-            stringFromInts = [str(int) for int in column]
-            string = columnName + ": " + ",".join(stringFromInts)
-            self.currentWidget.textOutput.append(string)
-        """
         self.removeTextOutput()
         self.addCanvas()
         self.plot(filename)
