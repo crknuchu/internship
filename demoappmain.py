@@ -8,11 +8,9 @@ from matplotlib.backends.backend_qtagg import FigureCanvas,NavigationToolbar2QT
 import os
 
 class customTab(QtWidgets.QWidget):
-    #def __init__(self, main_app):
     def __init__(self):
         super().__init__()
-    
-        #self.main_app = main_app
+
         self.createWidgets()        
         self.addWidgetsToLayout()
 
@@ -20,6 +18,11 @@ class customTab(QtWidgets.QWidget):
         self.clearButton.pressed.connect(self.clearPressed)
         self.checkBox.toggled.connect(self.disableDropDownMenu)
         self.dropDownMenu.textActivated.connect(lambda string: self.dropDownMenuActivated(string))
+        self.removeLegendButton.pressed.connect(self.removeLegendPressed)
+
+    def removeLegendPressed(self):
+        self.ax.get_legend().remove()
+        self.removeLegendButton.setEnabled(False)
 
     def dropDownMenuActivated(self,string):
         self.textOutput.append(string)
@@ -97,11 +100,10 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.addNewTabButton = QtWidgets.QPushButton()
         self.addNewTabButton.setText("+")
         self.tabWidget.setCornerWidget(self.addNewTabButton)
-        self.currentWidget = self.tabWidget.currentWidget()
-
-        #tab0 = customTab(main_app=self)
+        
         self.addNewTab()
-
+        self.currentWidget = self.tabWidget.currentWidget()
+        
         self.addNewTabButton.pressed.connect(self.addNewTab)
         self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
         self.actionOpen.triggered.connect(self.fileOpen)
@@ -112,10 +114,9 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
     
     def fileOpen(self):
-        file = QtWidgets.QFileDialog.getOpenFileName(self.currentTab,"","","All files (*.*);;Text Files (*.txt,);;CSV Files (*.csv)")
+        file = QtWidgets.QFileDialog.getOpenFileName(self.currentTab,"","","Text Files,CSV Files (*.txt *.csv)")
         filename = file[0]
         if filename != "": #if user doesn't select a file, the dialog returns an empty string
-            self.changeCurrentTab()
             if filename.endswith(".txt"):
                 self.openTxtFile(filename)
             elif filename.endswith(".csv"):
@@ -148,10 +149,10 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def plot(self,filename):
         #plots data from filename
         df = pandas.read_csv(filename)
-        ax = self.currentWidget.staticCanvas.figure.subplots()
-        df.plot(x="godina",ax=ax)
-        ax.set_ylabel("BDP")
-        ax.set_title(os.path.basename(filename))
+        self.currentWidget.ax = self.currentWidget.staticCanvas.figure.subplots()
+        df.plot(x="godina",ax=self.currentWidget.ax)
+        self.currentWidget.ax.set_ylabel("BDP")
+        self.currentWidget.ax.set_title(os.path.basename(filename))
 
     def removeTextOutput(self):
         self.currentWidget.tabLayout.removeWidget(self.currentWidget.textOutput)
