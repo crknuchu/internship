@@ -22,6 +22,7 @@ class customTab(QtWidgets.QWidget):
 
     def removeLegendPressed(self):
         self.ax.get_legend().remove()
+        self.staticCanvas.draw()
         self.removeLegendButton.setEnabled(False)
 
     def dropDownMenuActivated(self,string):
@@ -49,8 +50,6 @@ class customTab(QtWidgets.QWidget):
         #creates all the widgets inside customTab widget
         self.textOutput = QtWidgets.QTextEdit()
         self.textOutput.setReadOnly(True)
-        #self.staticCanvas = FigureCanvas(Figure(figsize=(2,2)))
-        #self.navBar = NavigationToolbar2QT(self.staticCanvas,self)
         self.textInput = QtWidgets.QLineEdit()
         self.clearButton = QtWidgets.QPushButton()
         self.clearButton.setText("Clear")
@@ -75,9 +74,6 @@ class customTab(QtWidgets.QWidget):
         self.inputLayout.addLayout(self.inputLayoutLeft)
         self.inputLayout.addLayout(self.inputLayoutRight)
         self.tabLayout.addWidget(self.textOutput)
-        #self.textOutput.setEnabled(False)
-        #self.tabLayout.addWidget(self.staticCanvas)
-        #self.tabLayout.addWidget(self.navBar)
         self.inputLayoutLeft.addWidget(self.clearButton)
         self.inputLayoutLeft.addWidget(self.textInput)        
         self.inputLayoutRight.addWidget(self.dropDownMenu)
