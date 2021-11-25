@@ -60,6 +60,7 @@ class customTab(QtWidgets.QWidget):
         self.dropDownMenu.addItem("amet")
         self.checkBox = QtWidgets.QCheckBox()
         self.checkBox.setText("Disable Drop-down Menu")
+        self.removeLegendButton = QtWidgets.QPushButton("Remove Legend")
 
     def addWidgetsToLayout(self):
         #adds widgets to customTab
@@ -77,7 +78,8 @@ class customTab(QtWidgets.QWidget):
         self.inputLayoutLeft.addWidget(self.clearButton)
         self.inputLayoutLeft.addWidget(self.textInput)        
         self.inputLayoutRight.addWidget(self.dropDownMenu)
-        self.inputLayoutRight.addWidget(self.checkBox) 
+        self.inputLayoutRight.addWidget(self.checkBox)
+        self.inputLayoutRight.addWidget(self.removeLegendButton) 
 
 
         
