@@ -24,16 +24,33 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect("motion_notify_event",self.lineHoverEvent)
         self.staticCanvas.mpl_connect("button_press_event",self.rightClickMenuEvent)
 
-    def rightClickMenuEvent(self,event):
-        if(event.button == 3):
-            self.contextMenu = QtWidgets.QMenu(self)
-            for line in self.ax.get_lines():
-                self.contextMenu.addAction(line.get_label())
-            self.contextMenu.popup(QCursor.pos())
+        self.actionDict = {}
 
+    def hideLine(self,action):
+        index = self.actionDict[action]
+        self.ax.get_lines()[index].set_alpha(0.0)
+        self.staticCanvas.draw()
+
+    def rightClickMenuEvent(self,event):
+        if(event.button == 3): #if the clicked button is Right Click
+            self.contextMenu = QtWidgets.QMenu(self)
+            for index,line in enumerate(self.ax.get_lines()):
+                self.contextMenu.addAction("Hide " + line.get_label())
+                self.actionDict["Hide " + line.get_label()] = index
+            self.contextMenu.addAction("Reveal All")
+            self.contextMenu.popup(QCursor.pos())
+            self.action = self.contextMenu.exec()
+            if self.action is not None:
+                if self.action.text() == "Reveal All":
+                    for line in self.ax.get_lines():
+                        line.set_alpha(1)
+                        self.staticCanvas.draw()
+                else:
+                    self.hideLine(self.action.text())
 
     def lineHoverEvent(self,event):
         #thickens line when mouse hover
+        legend = self.ax.legend()
         for line in self.ax.get_lines():
             if line.contains(event)[0]: #returns bool if line contains event
                 line.set_linewidth(5)
