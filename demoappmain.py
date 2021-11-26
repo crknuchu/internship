@@ -19,7 +19,18 @@ class customTab(QtWidgets.QWidget):
         self.checkBox.toggled.connect(self.disableDropDownMenu)
         self.dropDownMenu.textActivated.connect(lambda string: self.dropDownMenuActivated(string))
         self.removeLegendButton.pressed.connect(self.removeLegendPressed)
+        self.staticCanvas.mpl_connect("motion_notify_event",self.lineHoverEvent)
 
+    def lineHoverEvent(self,event):
+        #thickens line when mouse hover
+        legend = self.ax.legend()
+        for line in self.ax.get_lines():
+            if line.contains(event)[0]:
+                line.set_linewidth(5)
+            else:
+                line.set_linewidth(1)
+            self.staticCanvas.draw()
+        
     def removeLegendPressed(self):
         self.ax.get_legend().remove()
         self.staticCanvas.draw()
@@ -63,6 +74,11 @@ class customTab(QtWidgets.QWidget):
         self.checkBox = QtWidgets.QCheckBox()
         self.checkBox.setText("Disable Drop-down Menu")
         self.removeLegendButton = QtWidgets.QPushButton("Remove Legend")
+        self.staticCanvas = FigureCanvas(Figure())
+        self.navBar = NavigationToolbar2QT(self.staticCanvas,self)
+        self.staticCanvas.hide()
+        self.navBar.hide()
+
 
     def addWidgetsToLayout(self):
         #adds widgets to customTab
@@ -156,12 +172,11 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
     def addCanvas(self):
         #adds canvas and navigation bar to current tab
-        self.currentWidget.staticCanvas = FigureCanvas(Figure())
-        self.currentWidget.navBar = NavigationToolbar2QT(self.currentWidget.staticCanvas,self)
         self.currentWidget.tabLayout.addWidget(self.currentWidget.staticCanvas)
         self.currentWidget.tabLayout.addWidget(self.currentWidget.navBar)
+        self.currentWidget.staticCanvas.show()
+        self.currentWidget.navBar.show()
             
-
     def closeTab(self,index):
         self.tabWidget.removeTab(index)
 
