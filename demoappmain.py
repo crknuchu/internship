@@ -1,5 +1,7 @@
 from PyQt6 import QtWidgets
+from PyQt6.QtGui import QCursor
 from matplotlib import pyplot
+import matplotlib
 from matplotlib.figure import Figure
 import demoapp
 import sys
@@ -20,12 +22,20 @@ class customTab(QtWidgets.QWidget):
         self.dropDownMenu.textActivated.connect(lambda string: self.dropDownMenuActivated(string))
         self.removeLegendButton.pressed.connect(self.removeLegendPressed)
         self.staticCanvas.mpl_connect("motion_notify_event",self.lineHoverEvent)
+        self.staticCanvas.mpl_connect("button_press_event",self.rightClickMenuEvent)
+
+    def rightClickMenuEvent(self,event):
+        if(event.button == 3):
+            self.contextMenu = QtWidgets.QMenu(self)
+            for line in self.ax.get_lines():
+                self.contextMenu.addAction(line.get_label())
+            self.contextMenu.popup(QCursor.pos())
+
 
     def lineHoverEvent(self,event):
         #thickens line when mouse hover
-        legend = self.ax.legend()
         for line in self.ax.get_lines():
-            if line.contains(event)[0]:
+            if line.contains(event)[0]: #returns bool if line contains event
                 line.set_linewidth(5)
             else:
                 line.set_linewidth(1)
@@ -112,7 +122,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.addNewTabButton = QtWidgets.QPushButton()
         self.addNewTabButton.setText("+")
         self.tabWidget.setCornerWidget(self.addNewTabButton)
-        
+
         self.addNewTab()
         self.currentWidget = self.tabWidget.currentWidget()
         
