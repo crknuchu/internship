@@ -24,29 +24,36 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect("motion_notify_event",self.lineHoverEvent)
         self.staticCanvas.mpl_connect("button_press_event",self.rightClickMenuEvent)
 
-        self.actionDict = {}
+        self.lines = {}
 
-    def hideLine(self,action):
-        index = self.actionDict[action]
-        self.ax.get_lines()[index].set_alpha(0.0)
+    def setVisibility(self,action):
+        #index = self.actionDict[action]
+        line = self.lines[action.text()][0]
+        if line.get_visible():
+            line.set_visible(False)
+            self.lines[action.text()][1] = False
+            action.setChecked(False)
+        else:
+            line.set_visible(True)
+            self.lines[action.text()][1] = True
+            action.setChecked(True)
         self.staticCanvas.draw()
 
     def rightClickMenuEvent(self,event):
         if(event.button == 3): #if the clicked button is Right Click
             self.contextMenu = QtWidgets.QMenu(self)
-            for index,line in enumerate(self.ax.get_lines()):
-                self.contextMenu.addAction("Hide " + line.get_label())
-                self.actionDict["Hide " + line.get_label()] = index
-            self.contextMenu.addAction("Reveal All")
+            for line in self.ax.get_lines():
+                lineName = line.get_label()
+                act = self.contextMenu.addAction(lineName)
+                act.setCheckable(True)
+                if self.lines[lineName][1]:
+                    act.setChecked(True)
+                else:
+                    act.setChecked(False)
             self.contextMenu.popup(QCursor.pos())
             self.action = self.contextMenu.exec()
             if self.action is not None:
-                if self.action.text() == "Reveal All":
-                    for line in self.ax.get_lines():
-                        line.set_alpha(1)
-                        self.staticCanvas.draw()
-                else:
-                    self.hideLine(self.action.text())
+                    self.setVisibility(self.action)
 
     def lineHoverEvent(self,event):
         #thickens line when mouse hover
@@ -153,13 +160,20 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
     
     def fileOpen(self):
-        file = QtWidgets.QFileDialog.getOpenFileName(self.currentTab,"","","Text Files,CSV Files (*.txt *.csv)")
-        filename = file[0]
-        if filename != "": #if user doesn't select a file, the dialog returns an empty string
-            if filename.endswith(".txt"):
-                self.openTxtFile(filename)
-            elif filename.endswith(".csv"):
-                self.openCSVFile(filename)
+        #filename,_ = QtWidgets.QFileDialog.getOpenFileName(self.currentTab,"","","Text Files,CSV Files (*.txt *.csv)")
+        filter = "Text Files,CSV Files (*.txt *.csv)"
+        files,_ =  QtWidgets.QFileDialog.getOpenFileNames(self.currentTab,"","",filter)
+        #filenames = files[::-1]
+        #filename = file[0]
+        #print(filenames)
+        #for f in files:
+        #    print(f)
+        for filename in files:
+            if filename != "": #if user doesn't select a file, the dialog returns an empty string
+                if filename.endswith(".txt"):
+                    self.openTxtFile(filename)
+                elif filename.endswith(".csv"):
+                    self.openCSVFile(filename)
     
     def openTxtFile(self,filename):
         #removes canvas, adds textOutput and appends text from file to Output
@@ -182,6 +196,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def openCSVFile(self,filename):
         #opens csv file and plots it on canvas
         self.removeTextOutput()
+        #if not self.currentWidget.staticCanvas.axes():
         self.addCanvas()
         self.plot(filename)
 
@@ -190,6 +205,9 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         df = pandas.read_csv(filename)
         self.currentWidget.ax = self.currentWidget.staticCanvas.figure.subplots()
         df.plot(x="godina",ax=self.currentWidget.ax)
+        for line in self.currentWidget.ax.get_lines(): #adds lines to dict
+            self.currentWidget.lines[line.get_label()] = [line,line.get_visible()]
+        print(self.currentWidget.lines)
         self.currentWidget.ax.set_ylabel("BDP")
         self.currentWidget.ax.set_title(os.path.basename(filename))
 
