@@ -1,13 +1,12 @@
 from PyQt6 import QtWidgets
 from PyQt6.QtGui import QCursor
-from matplotlib import pyplot
-import matplotlib
 from matplotlib.figure import Figure
 import demoapp
 import sys
 import pandas
 from matplotlib.backends.backend_qtagg import FigureCanvas,NavigationToolbar2QT
 import os
+
 
 class customTab(QtWidgets.QWidget):
     def __init__(self):
@@ -24,18 +23,16 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect("motion_notify_event",self.lineHoverEvent)
         self.staticCanvas.mpl_connect("button_press_event",self.rightClickMenuEvent)
 
-        self.lines = {}
+        self.lines = {} #name of line : line object
 
     def setVisibility(self,action):
         #index = self.actionDict[action]
-        line = self.lines[action.text()][0]
+        line = self.lines[action.text()]
         if line.get_visible():
             line.set_visible(False)
-            self.lines[action.text()][1] = False
             action.setChecked(False)
         else:
             line.set_visible(True)
-            self.lines[action.text()][1] = True
             action.setChecked(True)
         self.staticCanvas.draw()
 
@@ -47,7 +44,7 @@ class customTab(QtWidgets.QWidget):
                 lineName = line.get_label()
                 act = self.contextMenu.addAction(lineName)
                 act.setCheckable(True)
-                if self.lines[lineName][1]:
+                if line.get_visible():
                     act.setChecked(True)
                 else:
                     act.setChecked(False)
@@ -201,8 +198,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.currentWidget.ax = self.currentWidget.staticCanvas.figure.subplots()
         df.plot(x="godina",ax=self.currentWidget.ax)
         for line in self.currentWidget.ax.get_lines(): #adds lines to dict
-            self.currentWidget.lines[line.get_label()] = [line,line.get_visible()]
-        print(self.currentWidget.lines)
+            self.currentWidget.lines[line.get_label()] = line
         self.currentWidget.ax.set_ylabel("BDP")
         self.currentWidget.ax.set_title(os.path.basename(filename))
 
