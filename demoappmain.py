@@ -6,6 +6,7 @@ import sys
 import pandas
 from matplotlib.backends.backend_qtagg import FigureCanvas,NavigationToolbar2QT
 import os
+import argparse
 
 
 class customTab(QtWidgets.QWidget):
@@ -148,6 +149,13 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.addNewTab()
         self.currentWidget = self.tabWidget.currentWidget()
         
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument("-p","--path",type=str)
+        self.args = self.parser.parse_args()
+        if self.args.path:
+            self.openCSVFile(self.args.path)
+
+
         self.addNewTabButton.pressed.connect(self.addNewTab)
         self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
         self.actionOpen.triggered.connect(self.fileOpen)
