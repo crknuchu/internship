@@ -40,6 +40,7 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.draw()
 
     def rightClickMenuEvent(self,event):
+        #opens right click popup
         if(event.button == 3): #if the clicked button is Right Click
             self.contextMenu = QtWidgets.QMenu(self)
             for line in self.ax.get_lines():
@@ -160,14 +161,8 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
     
     def fileOpen(self):
-        #filename,_ = QtWidgets.QFileDialog.getOpenFileName(self.currentTab,"","","Text Files,CSV Files (*.txt *.csv)")
         filter = "Text Files,CSV Files (*.txt *.csv)"
         files,_ =  QtWidgets.QFileDialog.getOpenFileNames(self.currentTab,"","",filter)
-        #filenames = files[::-1]
-        #filename = file[0]
-        #print(filenames)
-        #for f in files:
-        #    print(f)
         for filename in files:
             if filename != "": #if user doesn't select a file, the dialog returns an empty string
                 if filename.endswith(".txt"):
