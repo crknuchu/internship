@@ -40,6 +40,11 @@ class Marker():
         self.markerObj.set_visible(bool)
         self.annotation.set_visible(bool)
 
+class VertMarker():
+    def __init__(self,ax,xdata) -> None:
+        pass
+
+
 class customTab(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
@@ -55,6 +60,8 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect("motion_notify_event",self.lineHoverEvent)
         self.staticCanvas.mpl_connect("button_press_event",self.rightClickMenuEvent)
         self.staticCanvas.mpl_connect("button_press_event",self.addMarker)
+        self.staticCanvas.mpl_connect("button_press_event",self.addVerticalMarker)
+        self.staticCanvas.mpl_connect("button_press_event",self.addHorizontalMarker)
 
         #name of line : MainLine object
         self.lines = {}
@@ -66,7 +73,23 @@ class customTab(QtWidgets.QWidget):
 
                     marker = Marker(self.ax,event.xdata,event.ydata,"o")
                     self.lines[line.name].markerList.append(marker)
-                    
+
+
+    def addVerticalMarker(self,event):
+        if(event.button==1) and (event.ydata<=0): 
+            vertline = self.ax.axvline(x=event.xdata)
+            vertline.set_linestyle("--")
+            vertline.set_color("red")
+            self.staticCanvas.draw()
+            #print(vertline)
+
+    def addHorizontalMarker(self,event):
+        if(event.button==1) and (event.xdata<=2000): 
+            horline = self.ax.axhline(y=event.ydata)
+            horline.set_linestyle("--")
+            horline.set_color("red")
+            self.staticCanvas.draw()
+            #print(vertline)
                 
     def setVisibility(self,action):
         line = self.lines[action.text()]
