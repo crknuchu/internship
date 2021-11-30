@@ -8,16 +8,33 @@ from matplotlib.backends.backend_qtagg import FigureCanvas,NavigationToolbar2QT
 import os
 import argparse
 
+class MainLine():
+    #has line object and list of markers on the line
+    def __init__(self,lineObj):
+        self.lineObj = lineObj
+        self.markerList = []
+        self.name = self.lineObj.get_label()
+    
+    def set_visible(self,bool):
+        self.lineObj.set_visible(bool)
+        for marker in self.markerList:
+            marker.set_visible(bool)
+
+    def get_visible(self):
+        return self.lineObj.get_visible()
+
+
 class Marker():
+    #marker contains marker object and annotation
     def __init__(self,ax,xdata,ydata,type):
         self.xdata = xdata
         self.ydata = ydata
         self.type = type
     
-        markerlist = ax.plot(xdata,ydata,type)
+        listoflines = ax.plot(xdata,ydata,type)
         
-        self.markerObj = markerlist[0]
-        self.annotation = ax.annotate(f"{xdata:.2f},{ydata:.2f}",(xdata,ydata))
+        self.markerObj = listoflines[0]
+        self.annotation = ax.annotate(f"({xdata:.2f},{ydata:.2f})",(xdata,ydata))
     
     def set_visible(self,bool):
         self.markerObj.set_visible(bool)
@@ -39,64 +56,35 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect("button_press_event",self.rightClickMenuEvent)
         self.staticCanvas.mpl_connect("button_press_event",self.addMarker)
 
-        #name of line : line object
-        self.lines = {} 
+        #name of line : MainLine object
+        self.lines = {}
 
     def addMarker(self,event):
         if(event.button==1):
-            for line in self.ax.get_lines():
-                if line.contains(event)[0]:
+            for _,line in self.lines.items():
+                if line.lineObj.contains(event)[0]:
 
-                    markertest = Marker(self.ax,event.xdata,event.ydata,"o")
-                    #print(markertest.markerObj)
-
-                    #markerlist = self.ax.plot(event.xdata,event.ydata,"o")
-
-                    #kreiraj marker klasu
-
-                    #marker = markerlist[0]
-                    #ann = self.ax.annotate(f"{event.xdata:.2f},{event.ydata:.2f}",(event.xdata,event.ydata))
-                    #print(self.ann)
-                    #self.ann.set_visible(False)
-                    self.lines[line.get_label()][1].append(markertest)
-                    #self.lines[line.get_label()][1].append(ann)
-
-                    #print(self.lines[line.get_label()])
-                    #ovo self.marker vrv je problem jer je to ocito lista???
-                    print(self.lines)
-
+                    marker = Marker(self.ax,event.xdata,event.ydata,"o")
+                    self.lines[line.name].markerList.append(marker)
+                    
                 
     def setVisibility(self,action):
-        #for line in self.ax.lines:
-        #        line.set_visible(True)
-
-        line = self.lines[action.text()][0]
+        line = self.lines[action.text()]
         if line.get_visible():
             line.set_visible(False)
             action.setChecked(False)
-            for marker in self.lines[line.get_label()][1]:
-                marker.set_visible(False)
         else:
             line.set_visible(True)
             action.setChecked(True)
-            for marker in self.lines[line.get_label()][1]:
-                marker.set_visible(True)
         self.staticCanvas.draw()
 
     def rightClickMenuEvent(self,event):
         #opens right click popup
         if(event.button == 3): #if the clicked button is Right Click
             self.contextMenu = QtWidgets.QMenu(self)
-
-            #print(self.ax.lines)
-            #print(self.ax.get_lines())
-
-            #for line in self.ax.lines:
-            #    line.set_visible(False)
-
-            #iskoristi self.lines
-            for line in self.ax.get_lines():
-                act = self.contextMenu.addAction(line.get_label())
+   
+            for _,line in self.lines.items():
+                act = self.contextMenu.addAction(line.name)
                 act.setCheckable(True)
                 if line.get_visible():
                     act.setChecked(True)
@@ -106,11 +94,6 @@ class customTab(QtWidgets.QWidget):
             self.action = self.contextMenu.exec()
             if self.action is not None:
                     self.setVisibility(self.action)
-            
-            #for x in self.marker:
-            #    print(x)
-            #print("gotovo")
-                
 
     def lineHoverEvent(self,event):
         #thickens line when mouse hover
@@ -268,7 +251,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.currentWidget.ax = self.currentWidget.staticCanvas.figure.subplots()
         df.plot(x="godina",ax=self.currentWidget.ax)
         for line in self.currentWidget.ax.get_lines(): #adds lines to dict
-            self.currentWidget.lines[line.get_label()] = [line,[]]
+            self.currentWidget.lines[line.get_label()] = MainLine(line)
         self.currentWidget.ax.set_ylabel("BDP")
         self.currentWidget.ax.set_title(os.path.basename(filename))
 
