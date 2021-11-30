@@ -1,6 +1,9 @@
 from PyQt6 import QtWidgets
 from PyQt6.QtGui import QCursor
+from matplotlib.backend_bases import MouseEvent
 from matplotlib.figure import Figure
+from matplotlib.lines import Line2D
+from numpy import e
 import demoapp
 import sys
 import pandas
@@ -40,10 +43,6 @@ class Marker():
         self.markerObj.set_visible(bool)
         self.annotation.set_visible(bool)
 
-class VertMarker():
-    def __init__(self,ax,xdata) -> None:
-        pass
-
 
 class customTab(QtWidgets.QWidget):
     def __init__(self):
@@ -76,19 +75,23 @@ class customTab(QtWidgets.QWidget):
 
 
     def addVerticalMarker(self,event):
-        if(event.button==1) and (event.ydata<=0): 
-            vertline = self.ax.axvline(x=event.xdata)
-            vertline.set_linestyle("--")
-            vertline.set_color("red")
-            self.staticCanvas.draw()
+        #print("111111111111111111111111111111111111111")
+        #print(event.button,event.ydata)
+        if (event.ydata):
+            if(event.button==1) and (event.ydata<=0): 
+                vertline = self.ax.axvline(x=event.xdata)
+                vertline.set_linestyle("--")
+                vertline.set_color("red")
+                self.staticCanvas.draw()
             #print(vertline)
 
     def addHorizontalMarker(self,event):
-        if(event.button==1) and (event.xdata<=2000): 
-            horline = self.ax.axhline(y=event.ydata)
-            horline.set_linestyle("--")
-            horline.set_color("red")
-            self.staticCanvas.draw()
+        if (event.xdata):
+            if(event.button==1) and (event.xdata<=1999): 
+                horline = self.ax.axhline(y=event.ydata)
+                horline.set_linestyle("--")
+                horline.set_color("red")
+                self.staticCanvas.draw()
             #print(vertline)
                 
     def setVisibility(self,action):
@@ -103,20 +106,36 @@ class customTab(QtWidgets.QWidget):
 
     def rightClickMenuEvent(self,event):
         #opens right click popup
-        if(event.button == 3): #if the clicked button is Right Click
-            self.contextMenu = QtWidgets.QMenu(self)
-   
-            for _,line in self.lines.items():
-                act = self.contextMenu.addAction(line.name)
-                act.setCheckable(True)
-                if line.get_visible():
-                    act.setChecked(True)
+            pickedItem = False
+            if (event.button == 3):    
+                for item in self.ax.get_lines(): 
+                    if item.contains(event)[0]:
+                        pickedItem = True
+                        eventTrigger = item
+                if (pickedItem == True):
+                    self.createItemMenu(string=eventTrigger.get_label())
                 else:
-                    act.setChecked(False)
-            self.contextMenu.popup(QCursor.pos())
-            self.action = self.contextMenu.exec()
-            if self.action is not None:
-                    self.setVisibility(self.action)
+                    self.createDefaultMenu()
+            
+
+    def createItemMenu(self,string):
+        self.itemMenu = QtWidgets.QMenu(self)
+        self.itemMenu.addAction(string)
+        self.itemMenu.popup(QCursor.pos())
+
+    def createDefaultMenu(self):
+        self.contextMenu = QtWidgets.QMenu(self)
+        for _,line in self.lines.items():
+            act = self.contextMenu.addAction(line.name)
+            act.setCheckable(True)
+            if line.get_visible():
+                act.setChecked(True)
+            else:
+                act.setChecked(False)
+        self.contextMenu.popup(QCursor.pos())
+        self.action = self.contextMenu.exec()
+        if self.action is not None:
+                self.setVisibility(self.action)
 
     def lineHoverEvent(self,event):
         #thickens line when mouse hover
