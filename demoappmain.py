@@ -8,6 +8,20 @@ from matplotlib.backends.backend_qtagg import FigureCanvas,NavigationToolbar2QT
 import os
 import argparse
 
+class Marker():
+    def __init__(self,ax,xdata,ydata,type):
+        self.xdata = xdata
+        self.ydata = ydata
+        self.type = type
+    
+        markerlist = ax.plot(xdata,ydata,type)
+        
+        self.markerObj = markerlist[0]
+        self.annotation = ax.annotate(f"{xdata:.2f},{ydata:.2f}",(xdata,ydata))
+    
+    def set_visible(self,bool):
+        self.markerObj.set_visible(bool)
+        self.annotation.set_visible(bool)
 
 class customTab(QtWidgets.QWidget):
     def __init__(self):
@@ -23,27 +37,66 @@ class customTab(QtWidgets.QWidget):
         self.removeLegendButton.pressed.connect(self.removeLegendPressed)
         self.staticCanvas.mpl_connect("motion_notify_event",self.lineHoverEvent)
         self.staticCanvas.mpl_connect("button_press_event",self.rightClickMenuEvent)
+        self.staticCanvas.mpl_connect("button_press_event",self.addMarker)
 
-        self.lines = {} #name of line : line object
+        #name of line : line object
+        self.lines = {} 
 
+    def addMarker(self,event):
+        if(event.button==1):
+            for line in self.ax.get_lines():
+                if line.contains(event)[0]:
+
+                    markertest = Marker(self.ax,event.xdata,event.ydata,"o")
+                    #print(markertest.markerObj)
+
+                    #markerlist = self.ax.plot(event.xdata,event.ydata,"o")
+
+                    #kreiraj marker klasu
+
+                    #marker = markerlist[0]
+                    #ann = self.ax.annotate(f"{event.xdata:.2f},{event.ydata:.2f}",(event.xdata,event.ydata))
+                    #print(self.ann)
+                    #self.ann.set_visible(False)
+                    self.lines[line.get_label()][1].append(markertest)
+                    #self.lines[line.get_label()][1].append(ann)
+
+                    #print(self.lines[line.get_label()])
+                    #ovo self.marker vrv je problem jer je to ocito lista???
+                    print(self.lines)
+
+                
     def setVisibility(self,action):
-        #index = self.actionDict[action]
-        line = self.lines[action.text()]
+        #for line in self.ax.lines:
+        #        line.set_visible(True)
+
+        line = self.lines[action.text()][0]
         if line.get_visible():
             line.set_visible(False)
             action.setChecked(False)
+            for marker in self.lines[line.get_label()][1]:
+                marker.set_visible(False)
         else:
             line.set_visible(True)
             action.setChecked(True)
+            for marker in self.lines[line.get_label()][1]:
+                marker.set_visible(True)
         self.staticCanvas.draw()
 
     def rightClickMenuEvent(self,event):
         #opens right click popup
         if(event.button == 3): #if the clicked button is Right Click
             self.contextMenu = QtWidgets.QMenu(self)
+
+            #print(self.ax.lines)
+            #print(self.ax.get_lines())
+
+            #for line in self.ax.lines:
+            #    line.set_visible(False)
+
+            #iskoristi self.lines
             for line in self.ax.get_lines():
-                lineName = line.get_label()
-                act = self.contextMenu.addAction(lineName)
+                act = self.contextMenu.addAction(line.get_label())
                 act.setCheckable(True)
                 if line.get_visible():
                     act.setChecked(True)
@@ -53,13 +106,18 @@ class customTab(QtWidgets.QWidget):
             self.action = self.contextMenu.exec()
             if self.action is not None:
                     self.setVisibility(self.action)
+            
+            #for x in self.marker:
+            #    print(x)
+            #print("gotovo")
+                
 
     def lineHoverEvent(self,event):
         #thickens line when mouse hover
         legend = self.ax.legend()
         for line in self.ax.get_lines():
             if line.contains(event)[0]: #returns bool if line contains event
-                line.set_linewidth(5)
+                line.set_linewidth(2)
             else:
                 line.set_linewidth(1)
             self.staticCanvas.draw()
@@ -153,6 +211,11 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.parser.add_argument("-p","--path",type=str)
         self.args = self.parser.parse_args()
         if self.args.path:
+            try:
+                open(self.args.path,"r")
+            except:
+                print("file doesn't exist")
+                exit()
             self.openCSVFile(self.args.path)
 
 
@@ -196,7 +259,6 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def openCSVFile(self,filename):
         #opens csv file and plots it on canvas
         self.removeTextOutput()
-        #if not self.currentWidget.staticCanvas.axes():
         self.addCanvas()
         self.plot(filename)
 
@@ -206,7 +268,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.currentWidget.ax = self.currentWidget.staticCanvas.figure.subplots()
         df.plot(x="godina",ax=self.currentWidget.ax)
         for line in self.currentWidget.ax.get_lines(): #adds lines to dict
-            self.currentWidget.lines[line.get_label()] = line
+            self.currentWidget.lines[line.get_label()] = [line,[]]
         self.currentWidget.ax.set_ylabel("BDP")
         self.currentWidget.ax.set_title(os.path.basename(filename))
 
