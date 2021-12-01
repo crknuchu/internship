@@ -43,6 +43,25 @@ class Marker():
         self.markerObj.set_visible(bool)
         self.annotation.set_visible(bool)
 
+class VertMarker():
+    def __init__(self,ax,xdata):
+        self.xdata = xdata
+
+        self.markerObj = ax.axvline(xdata)
+        self.markerObj.set_linestyle("--")
+        self.markerObj.set_color("red")
+
+        self.annotation = ax.annotate(f"({xdata:.2f})",(xdata,0))
+
+class HorMarker():
+    def __init__(self,ax,ydata):
+        self.ydata = ydata
+
+        self.markerObj = ax.axhline(ydata)
+        self.markerObj.set_linestyle("--")
+        self.markerObj.set_color("red")
+
+        self.annotation = ax.annotate(f"({ydata:.2f})",(1999,ydata))
 
 class customTab(QtWidgets.QWidget):
     def __init__(self):
@@ -69,30 +88,21 @@ class customTab(QtWidgets.QWidget):
         if(event.button==1):
             for _,line in self.lines.items():
                 if line.lineObj.contains(event)[0]:
-
                     marker = Marker(self.ax,event.xdata,event.ydata,"o")
                     self.lines[line.name].markerList.append(marker)
 
 
     def addVerticalMarker(self,event):
-        #print("111111111111111111111111111111111111111")
-        #print(event.button,event.ydata)
         if (event.ydata):
             if(event.button==1) and (event.ydata<=0): 
-                vertline = self.ax.axvline(x=event.xdata)
-                vertline.set_linestyle("--")
-                vertline.set_color("red")
+                verticalMarker = VertMarker(self.ax,event.xdata)
                 self.staticCanvas.draw()
-            #print(vertline)
 
     def addHorizontalMarker(self,event):
         if (event.xdata):
             if(event.button==1) and (event.xdata<=1999): 
-                horline = self.ax.axhline(y=event.ydata)
-                horline.set_linestyle("--")
-                horline.set_color("red")
+                horizontalMarker = HorMarker(self.ax,event.ydata)
                 self.staticCanvas.draw()
-            #print(vertline)
                 
     def setVisibility(self,action):
         line = self.lines[action.text()]
@@ -212,10 +222,6 @@ class customTab(QtWidgets.QWidget):
         self.inputLayoutRight.addWidget(self.checkBox)
         self.inputLayoutRight.addWidget(self.removeLegendButton) 
 
-
-        
-
-    
 
 class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def __init__(self):
