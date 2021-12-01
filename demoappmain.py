@@ -43,25 +43,25 @@ class Marker():
         self.markerObj.set_visible(bool)
         self.annotation.set_visible(bool)
 
-class VertMarker():
-    def __init__(self,ax,xdata):
+class LineMarker():
+    def __init__(self, ax, xdata, ydata):
         self.xdata = xdata
-
-        self.markerObj = ax.axvline(xdata)
-        self.markerObj.set_linestyle("--")
-        self.markerObj.set_color("red")
-
-        self.annotation = ax.annotate(f"({xdata:.2f})",(xdata,0))
-
-class HorMarker():
-    def __init__(self,ax,ydata):
         self.ydata = ydata
 
-        self.markerObj = ax.axhline(ydata)
-        self.markerObj.set_linestyle("--")
-        self.markerObj.set_color("red")
+        if self.xdata == 0:
+            #horizontal marker
+            self.markerObj = ax.axhline(self.ydata)
+            self.markerObj.set_linestyle("--")
+            self.markerObj.set_color("red")
+            self.annotation = ax.annotate(f"({ydata:.2f})",(1999,ydata))
 
-        self.annotation = ax.annotate(f"({ydata:.2f})",(1999,ydata))
+        if self.ydata == 0:
+            #vertical marker
+            self.markerObj = ax.axvline(self.xdata)
+            self.markerObj.set_linestyle("--")
+            self.markerObj.set_color("red")
+
+            self.annotation = ax.annotate(f"({xdata:.2f})",(xdata,0))
 
 class customTab(QtWidgets.QWidget):
     def __init__(self):
@@ -94,13 +94,13 @@ class customTab(QtWidgets.QWidget):
     def addVerticalMarker(self,event):
         if (event.ydata):               #calculates 1/20 between max y value and min y value
             if(event.button==1) and (event.ydata <= (self.ax.get_ylim()[1]-self.ax.get_ylim()[0])/20+self.ax.get_ylim()[0]): 
-                verticalMarker = VertMarker(self.ax,event.xdata)
+                verticalMarker = LineMarker(self.ax,event.xdata,0)
                 self.staticCanvas.draw()
 
     def addHorizontalMarker(self,event):
         if (event.xdata):
             if(event.button==1) and (event.xdata <= (self.ax.get_xlim()[1]-self.ax.get_xlim()[0])/20+self.ax.get_xlim()[0]): 
-                horizontalMarker = HorMarker(self.ax,event.ydata)
+                horizontalMarker = LineMarker(self.ax,0,event.ydata)
                 self.staticCanvas.draw()
 
     def setVisibility(self,action):
