@@ -91,19 +91,18 @@ class customTab(QtWidgets.QWidget):
                     marker = Marker(self.ax,event.xdata,event.ydata,"o")
                     self.lines[line.name].markerList.append(marker)
 
-
     def addVerticalMarker(self,event):
-        if (event.ydata):
-            if(event.button==1) and (event.ydata<=0): 
+        if (event.ydata):               #calculates 1/20 between max y value and min y value
+            if(event.button==1) and (event.ydata <= (self.ax.get_ylim()[1]-self.ax.get_ylim()[0])/20+self.ax.get_ylim()[0]): 
                 verticalMarker = VertMarker(self.ax,event.xdata)
                 self.staticCanvas.draw()
 
     def addHorizontalMarker(self,event):
         if (event.xdata):
-            if(event.button==1) and (event.xdata<=1999): 
+            if(event.button==1) and (event.xdata <= (self.ax.get_xlim()[1]-self.ax.get_xlim()[0])/20+self.ax.get_xlim()[0]): 
                 horizontalMarker = HorMarker(self.ax,event.ydata)
                 self.staticCanvas.draw()
-                
+
     def setVisibility(self,action):
         line = self.lines[action.text()]
         if line.get_visible():
@@ -122,6 +121,7 @@ class customTab(QtWidgets.QWidget):
                     if item.contains(event)[0]:
                         pickedItem = True
                         eventTrigger = item
+                
                 if (pickedItem == True):
                     self.createItemMenu(string=eventTrigger.get_label())
                 else:
