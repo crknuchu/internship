@@ -49,6 +49,10 @@ class Marker():
     
     def contains(self,event):
         return self.markerObj.contains(event)
+    
+    def remove(self):
+        self.annotation.remove()
+        self.markerObj.remove()
 
 class DotMarker(Marker):
     #dot marker that is put on lines
@@ -155,21 +159,24 @@ class customTab(QtWidgets.QWidget):
         #opens right click popup
             pickedItem = False
             if (event.button == 3):    
-                for _,object in self.markers.items(): 
-                    if object.contains(event)[0]:
+                for _,marker in self.markers.items(): 
+                    if marker.contains(event)[0]:
                         pickedItem = True
-                        eventTrigger = object
+                        eventTrigger = marker
                 
                 if (pickedItem == True):
-                    self.createItemMenu(string=eventTrigger.name)
+                    self.createMarkerMenu(eventTrigger)
                 else:
                     self.createDefaultMenu()
-            
 
-    def createItemMenu(self,string):
-        self.itemMenu = QtWidgets.QMenu(self)
-        self.itemMenu.addAction(string)
-        self.itemMenu.popup(QCursor.pos())
+    def createMarkerMenu(self,eventTrigger):
+        self.markerMenu = QtWidgets.QMenu(self)
+        self.markerMenu.addAction("Delete")
+        self.markerMenu.popup(QCursor.pos())
+        action = self.markerMenu.exec()
+        if action is not None:
+            eventTrigger.remove()
+            del self.markers[eventTrigger.name] #ovde mozda neka funkcija
 
     def createDefaultMenu(self):
         self.contextMenu = QtWidgets.QMenu(self)
@@ -181,9 +188,9 @@ class customTab(QtWidgets.QWidget):
             else:
                 act.setChecked(False)
         self.contextMenu.popup(QCursor.pos())
-        self.action = self.contextMenu.exec()
-        if self.action is not None:
-                self.setVisibility(self.action)
+        action = self.contextMenu.exec()
+        if action is not None:
+                self.setVisibility(action)
 
     def lineHoverEvent(self,event):
         #thickens line when mouse hover
