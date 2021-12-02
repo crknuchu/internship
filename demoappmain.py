@@ -29,39 +29,49 @@ class MainLine():
 
 class Marker():
     #marker contains marker object and annotation
-    def __init__(self,ax,xdata,ydata,type):
+    def __init__(self,xdata,ydata,typeOfMarker,color):
         self.xdata = xdata
         self.ydata = ydata
-        self.type = type
-    
-        listoflines = ax.plot(xdata,ydata,type)
-        
-        self.markerObj = listoflines[0]
-        self.annotation = ax.annotate(f"({xdata:.2f},{ydata:.2f})",(xdata,ydata))
+        self.typeOfMarker = typeOfMarker
+        self.markerObj = None
+        self.color = color
+        if color != "random" and self.markerObj is not None:
+            self.color = color
+            self.markerObj.set_color(self.color)
+        self.annotation = None
     
     def set_visible(self,bool):
         self.markerObj.set_visible(bool)
         self.annotation.set_visible(bool)
 
-class LineMarker():
-    def __init__(self, ax, xdata, ydata):
-        self.xdata = xdata
-        self.ydata = ydata
+class DotMarker(Marker):
+    #dot marker that is put on lines
+    def __init__(self,ax,xdata,ydata,typeOfMarker,color):
+        super().__init__(xdata,ydata,typeOfMarker,color)
+    
+        listoflines = ax.plot(xdata,ydata,typeOfMarker)
+        self.markerObj = listoflines[0]
+        self.annotation = ax.annotate(f"({xdata:.2f},{ydata:.2f})",(xdata,ydata))
 
-        if self.xdata == 0:
+
+class LineMarker(Marker):
+    #dashed line marker
+    def __init__(self, ax, xdata, ydata,typeOfMarker,color):
+        super().__init__(xdata,ydata,typeOfMarker,color)
+
             #horizontal marker
+        if self.xdata == 0:
             self.markerObj = ax.axhline(self.ydata)
-            self.markerObj.set_linestyle("--")
-            self.markerObj.set_color("red")
-            self.annotation = ax.annotate(f"({ydata:.2f})",(1999,ydata))
+            self.markerObj.set_linestyle(self.typeOfMarker)
+            self.markerObj.set_color(self.color)
+            self.annotation = ax.annotate(f"({self.ydata:.2f})",(ax.get_xlim()[0],self.ydata))
 
-        if self.ydata == 0:
             #vertical marker
+        if self.ydata == 0:
             self.markerObj = ax.axvline(self.xdata)
-            self.markerObj.set_linestyle("--")
-            self.markerObj.set_color("red")
-
-            self.annotation = ax.annotate(f"({xdata:.2f})",(xdata,0))
+            self.markerObj.set_linestyle(self.typeOfMarker)
+            self.markerObj.set_color(self.color)
+            self.annotation = ax.annotate(f"({self.xdata:.2f})",(self.xdata,ax.get_ylim()[0]))
 
 class customTab(QtWidgets.QWidget):
     def __init__(self):
@@ -77,31 +87,34 @@ class customTab(QtWidgets.QWidget):
         self.removeLegendButton.pressed.connect(self.removeLegendPressed)
         self.staticCanvas.mpl_connect("motion_notify_event",self.lineHoverEvent)
         self.staticCanvas.mpl_connect("button_press_event",self.rightClickMenuEvent)
-        self.staticCanvas.mpl_connect("button_press_event",self.addMarker)
+        self.staticCanvas.mpl_connect("button_press_event",self.addDotMarker)
         self.staticCanvas.mpl_connect("button_press_event",self.addVerticalMarker)
         self.staticCanvas.mpl_connect("button_press_event",self.addHorizontalMarker)
 
         #name of line : MainLine object
         self.lines = {}
 
-    def addMarker(self,event):
+    def addDotMarker(self,event):
         if(event.button==1):
             for _,line in self.lines.items():
                 if line.lineObj.contains(event)[0]:
-                    marker = Marker(self.ax,event.xdata,event.ydata,"o")
+                    marker = DotMarker(self.ax,event.xdata,event.ydata,"o","random")
                     self.lines[line.name].markerList.append(marker)
 
     def addVerticalMarker(self,event):
         if (event.ydata):               #calculates 1/20 between max y value and min y value
-            if(event.button==1) and (event.ydata <= (self.ax.get_ylim()[1]-self.ax.get_ylim()[0])/20+self.ax.get_ylim()[0]): 
-                verticalMarker = LineMarker(self.ax,event.xdata,0)
+            if(event.button==1) and (event.ydata <= self.calculateMarkerEdge(self.ax.get_ylim()[0],self.ax.get_ylim()[1],20)): 
+                verticalMarker = LineMarker(self.ax,event.xdata,0,"--","red")
                 self.staticCanvas.draw()
 
     def addHorizontalMarker(self,event):
         if (event.xdata):
-            if(event.button==1) and (event.xdata <= (self.ax.get_xlim()[1]-self.ax.get_xlim()[0])/20+self.ax.get_xlim()[0]): 
-                horizontalMarker = LineMarker(self.ax,0,event.ydata)
+            if(event.button==1) and (event.xdata <= self.calculateMarkerEdge(self.ax.get_xlim()[0],self.ax.get_xlim()[1],20)): 
+                horizontalMarker = LineMarker(self.ax,0,event.ydata,"--","red")
                 self.staticCanvas.draw()
+
+    def calculateMarkerEdge(self,a,b,fraction):
+        return (b-a)/fraction + a
 
     def setVisibility(self,action):
         line = self.lines[action.text()]
