@@ -15,7 +15,7 @@ class MainLine():
     #has line object and list of markers on the line
     def __init__(self,lineObj):
         self.lineObj = lineObj
-        self.markerList = []
+        self.markerList = [] #list of dotMarkers on the mainLine
         self.name = self.lineObj.get_label()
     
     def set_visible(self,bool):
@@ -25,6 +25,9 @@ class MainLine():
 
     def get_visible(self):
         return self.lineObj.get_visible()
+    
+    def contains(self,event):
+        return self.lineObj.contains(event)
 
 
 class Marker():
@@ -43,6 +46,9 @@ class Marker():
             self.markerObj.set_visible(bool)
         if self.annotation is not None:
             self.annotation.set_visible(bool)
+    
+    def contains(self,event):
+        return self.markerObj.contains(event)
 
 class DotMarker(Marker):
     #dot marker that is put on lines
@@ -56,6 +62,8 @@ class DotMarker(Marker):
         if self.color is not None:
             self.markerObj.set_color(self.color)
         self.annotation = self.ax.annotate(f"({xdata:.2f},{ydata:.2f})",(xdata,ydata))
+
+        self.name = self.markerObj.get_label()
 
 class LineMarker(Marker):
     #dashed line marker
@@ -72,6 +80,8 @@ class HorizontalMarker(LineMarker):
         self.markerObj.set_color(self.color)
         self.annotation = self.ax.annotate(f"({self.ydata:.2f})",(self.ax.get_xlim()[0],self.ydata))
 
+        self.name = self.markerObj.get_label()
+
 class VerticalMarker(LineMarker):
     def __init__(self, ax, xdata, typeOfMarker, color):
         super().__init__(ax, typeOfMarker, color)
@@ -81,6 +91,8 @@ class VerticalMarker(LineMarker):
         self.markerObj.set_linestyle(self.typeOfMarker)
         self.markerObj.set_color(self.color)
         self.annotation = self.ax.annotate(f"({self.xdata:.2f})",(self.xdata,self.ax.get_ylim()[0]))
+
+        self.name = self.markerObj.get_label()
 
 
 class customTab(QtWidgets.QWidget):
@@ -101,6 +113,8 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect("button_press_event",self.addVerticalMarker)
         self.staticCanvas.mpl_connect("button_press_event",self.addHorizontalMarker)
 
+        #name of object : Object - contains all lines and markers on plot
+        self.allObjects = {}
         #name of line : MainLine object
         self.lines = {}
 
@@ -110,18 +124,19 @@ class customTab(QtWidgets.QWidget):
                 if line.lineObj.contains(event)[0]:
                     marker = DotMarker(self.ax,event.xdata,event.ydata,"o",None)
                     self.lines[line.name].markerList.append(marker)
+                    self.allObjects[marker.name] = marker
 
     def addVerticalMarker(self,event):
         if (event.ydata):               #calculates 1/20 between max y value and min y value
             if(event.button==1) and (event.ydata <= self.calculateMarkerEdge(self.ax.get_ylim()[0],self.ax.get_ylim()[1],20)): 
                 verticalMarker = VerticalMarker(self.ax,event.xdata,"--","red")
-                self.staticCanvas.draw()
+                self.allObjects[verticalMarker.name] = verticalMarker
 
     def addHorizontalMarker(self,event):
         if (event.xdata):
             if(event.button==1) and (event.xdata <= self.calculateMarkerEdge(self.ax.get_xlim()[0],self.ax.get_xlim()[1],20)): 
                 horizontalMarker = HorizontalMarker(self.ax,event.ydata,"--","red")
-                self.staticCanvas.draw()
+                self.allObjects[horizontalMarker.name] = horizontalMarker
 
     def calculateMarkerEdge(self,a,b,fraction):
         return (b-a)/fraction + a
@@ -140,13 +155,13 @@ class customTab(QtWidgets.QWidget):
         #opens right click popup
             pickedItem = False
             if (event.button == 3):    
-                for item in self.ax.get_lines(): 
-                    if item.contains(event)[0]:
+                for key,value in self.allObjects.items(): 
+                    if value.contains(event)[0]:
                         pickedItem = True
-                        eventTrigger = item
+                        eventTrigger = value
                 
                 if (pickedItem == True):
-                    self.createItemMenu(string=eventTrigger.get_label())
+                    self.createItemMenu(string=eventTrigger.name)
                 else:
                     self.createDefaultMenu()
             
@@ -323,6 +338,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         df.plot(x="godina",ax=self.currentWidget.ax)
         for line in self.currentWidget.ax.get_lines(): #adds lines to dict
             self.currentWidget.lines[line.get_label()] = MainLine(line)
+            self.currentWidget.allObjects[line.get_label()] = MainLine(line)
         self.currentWidget.ax.set_ylabel("BDP")
         self.currentWidget.ax.set_title(os.path.basename(filename))
 
