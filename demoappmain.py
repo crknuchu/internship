@@ -15,7 +15,7 @@ class MainLine():
     #has line object and list of markers on the line
     def __init__(self,lineObj):
         self.lineObj = lineObj
-        self.markerList = []
+        self.markerList = [] #list of dotMarkers on the mainLine
         self.name = self.lineObj.get_label()
     
     def set_visible(self,bool):
@@ -25,62 +25,96 @@ class MainLine():
 
     def get_visible(self):
         return self.lineObj.get_visible()
+    
+    def contains(self,event):
+        return self.lineObj.contains(event)
 
 
 class Marker():
     #marker contains marker object and annotation
-    def __init__(self,ax,typeOfMarker,color):
+    def __init__(self,ax,style,color):
         self.ax = ax
-        self.typeOfMarker = typeOfMarker
+        self.style = style
         self.color = color
         self.xdata = None
         self.ydata = None
         self.markerObj = None
         self.annotation = None
+        self.type = None
     
     def set_visible(self,bool):
         if self.markerObj is not None:
             self.markerObj.set_visible(bool)
         if self.annotation is not None:
             self.annotation.set_visible(bool)
+    
+    def contains(self,event):
+        if self.markerObj is not None:
+            return self.markerObj.contains(event)
+    
+    def remove(self):
+        if self.annotation is not None:
+            self.annotation.remove()
+        if self.markerObj is not None:    
+            self.markerObj.remove()
 
 class DotMarker(Marker):
     #dot marker that is put on lines
-    def __init__(self, ax, xdata, ydata, typeOfMarker, color):
-        super().__init__(ax, typeOfMarker, color)
+    def __init__(self, ax, xdata, ydata, style, color):
+        super().__init__(ax, style, color)
+        self.type = "dot"
         self.xdata = xdata
         self.ydata = ydata
     
-        listoflines = self.ax.plot(self.xdata,self.ydata,typeOfMarker)
+        listoflines = self.ax.plot(self.xdata,self.ydata,style)
         self.markerObj = listoflines[0]
         if self.color is not None:
             self.markerObj.set_color(self.color)
         self.annotation = self.ax.annotate(f"({xdata:.2f},{ydata:.2f})",(xdata,ydata))
+        self.name = self.markerObj.get_label()
 
 class LineMarker(Marker):
     #dashed line marker
-    def __init__(self,ax,typeOfMarker,color):
-        super().__init__(ax,typeOfMarker,color)
+    def __init__(self,ax,style,color):
+        super().__init__(ax,style,color)
+    
 
 class HorizontalMarker(LineMarker):
-    def __init__(self, ax, ydata, typeOfMarker, color):
-        super().__init__(ax, typeOfMarker, color)
+    def __init__(self, ax, ydata, style, color):
+        super().__init__(ax, style, color)
         self.ydata = ydata
+        self.type = "horizontal"
 
-        self.markerObj = self.ax.axhline(self.ydata)
-        self.markerObj.set_linestyle(self.typeOfMarker)
+        self.markerObj = self.ax.axhline(self.ydata,picker=True)
+        self.markerObj.set_linestyle(self.style)
         self.markerObj.set_color(self.color)
         self.annotation = self.ax.annotate(f"({self.ydata:.2f})",(self.ax.get_xlim()[0],self.ydata))
 
-class VerticalMarker(LineMarker):
-    def __init__(self, ax, xdata, typeOfMarker, color):
-        super().__init__(ax, typeOfMarker, color)
-        self.xdata = xdata
+        self.name = self.markerObj.get_label()
 
-        self.markerObj = self.ax.axvline(self.xdata)
-        self.markerObj.set_linestyle(self.typeOfMarker)
+    def move(self,ydata):
+        self.markerObj.set_ydata(ydata) 
+        self.annotation.set_y(ydata)
+        self.annotation.set_text(f"({ydata:.2f})")
+
+class VerticalMarker(LineMarker):
+    def __init__(self, ax, xdata, style, color):
+        super().__init__(ax, style, color)
+        self.xdata = xdata
+        self.type = "vertical"
+
+        self.markerObj = self.ax.axvline(self.xdata,picker=True)
+        self.markerObj.set_linestyle(self.style)
         self.markerObj.set_color(self.color)
         self.annotation = self.ax.annotate(f"({self.xdata:.2f})",(self.xdata,self.ax.get_ylim()[0]))
+
+        self.name = self.markerObj.get_label()
+
+    def move(self,xdata):
+        self.markerObj.set_xdata(xdata) 
+        self.annotation.set_x(xdata)
+        self.annotation.set_text(f"({xdata:.2f})")
+
 
 
 class customTab(QtWidgets.QWidget):
@@ -100,9 +134,32 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect("button_press_event",self.addDotMarker)
         self.staticCanvas.mpl_connect("button_press_event",self.addVerticalMarker)
         self.staticCanvas.mpl_connect("button_press_event",self.addHorizontalMarker)
+        self.staticCanvas.mpl_connect('button_release_event', self.on_release)
+        self.staticCanvas.mpl_connect('pick_event', self.pickMarker)
+        self.staticCanvas.mpl_connect('motion_notify_event', self.on_motion)        
+        
+        self.markers = {} #name of marker : Marker Object
+        self.lines = {} #name of line : MainLine object
 
-        #name of line : MainLine object
-        self.lines = {}
+        self.current_marker = None
+    
+    def on_release(self,event):
+        self.current_marker = None
+
+    def pickMarker(self,event):
+        if(event.mouseevent.button==1):
+            self.current_marker = self.markers[event.artist.get_label()]
+
+    def on_motion(self, event):
+        if self.current_marker is None:
+            return
+        if self.current_marker.type == "horizontal":
+            self.current_marker.move(event.ydata)
+        elif self.current_marker.type == "vertical":
+            self.current_marker.move(event.xdata)    
+
+        self.staticCanvas.draw()
+
 
     def addDotMarker(self,event):
         if(event.button==1):
@@ -110,18 +167,19 @@ class customTab(QtWidgets.QWidget):
                 if line.lineObj.contains(event)[0]:
                     marker = DotMarker(self.ax,event.xdata,event.ydata,"o",None)
                     self.lines[line.name].markerList.append(marker)
+                    self.markers[marker.name] = marker
 
     def addVerticalMarker(self,event):
         if (event.ydata):               #calculates 1/20 between max y value and min y value
             if(event.button==1) and (event.ydata <= self.calculateMarkerEdge(self.ax.get_ylim()[0],self.ax.get_ylim()[1],20)): 
                 verticalMarker = VerticalMarker(self.ax,event.xdata,"--","red")
-                self.staticCanvas.draw()
+                self.markers[verticalMarker.name] = verticalMarker
 
     def addHorizontalMarker(self,event):
         if (event.xdata):
             if(event.button==1) and (event.xdata <= self.calculateMarkerEdge(self.ax.get_xlim()[0],self.ax.get_xlim()[1],20)): 
                 horizontalMarker = HorizontalMarker(self.ax,event.ydata,"--","red")
-                self.staticCanvas.draw()
+                self.markers[horizontalMarker.name] = horizontalMarker
 
     def calculateMarkerEdge(self,a,b,fraction):
         return (b-a)/fraction + a
@@ -140,21 +198,28 @@ class customTab(QtWidgets.QWidget):
         #opens right click popup
             pickedItem = False
             if (event.button == 3):    
-                for item in self.ax.get_lines(): 
-                    if item.contains(event)[0]:
+                for marker in self.markers.values():
+                    if marker.contains(event)[0]:
                         pickedItem = True
-                        eventTrigger = item
+                        eventTrigger = marker
+                        break
                 
                 if (pickedItem == True):
-                    self.createItemMenu(string=eventTrigger.get_label())
+                    self.createMarkerMenu(eventTrigger)
                 else:
                     self.createDefaultMenu()
-            
 
-    def createItemMenu(self,string):
-        self.itemMenu = QtWidgets.QMenu(self)
-        self.itemMenu.addAction(string)
-        self.itemMenu.popup(QCursor.pos())
+    def createMarkerMenu(self,eventTrigger):
+        self.markerMenu = QtWidgets.QMenu(self)
+        self.markerMenu.addAction("Delete")
+        self.markerMenu.popup(QCursor.pos())
+        action = self.markerMenu.exec()
+        if action is not None:
+            self.removeMarker(eventTrigger)
+
+    def removeMarker(self,marker):
+        marker.remove()
+        del self.markers[marker.name]
 
     def createDefaultMenu(self):
         self.contextMenu = QtWidgets.QMenu(self)
@@ -166,9 +231,9 @@ class customTab(QtWidgets.QWidget):
             else:
                 act.setChecked(False)
         self.contextMenu.popup(QCursor.pos())
-        self.action = self.contextMenu.exec()
-        if self.action is not None:
-                self.setVisibility(self.action)
+        action = self.contextMenu.exec()
+        if action is not None:
+                self.setVisibility(action)
 
     def lineHoverEvent(self,event):
         #thickens line when mouse hover
