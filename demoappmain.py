@@ -48,11 +48,14 @@ class Marker():
             self.annotation.set_visible(bool)
     
     def contains(self,event):
-        return self.markerObj.contains(event)
+        if self.markerObj is not None:
+            return self.markerObj.contains(event)
     
     def remove(self):
-        self.annotation.remove()
-        self.markerObj.remove()
+        if self.annotation is not None:
+            self.annotation.remove()
+        if self.markerObj is not None:    
+            self.markerObj.remove()
 
 class DotMarker(Marker):
     #dot marker that is put on lines
@@ -66,7 +69,6 @@ class DotMarker(Marker):
         if self.color is not None:
             self.markerObj.set_color(self.color)
         self.annotation = self.ax.annotate(f"({xdata:.2f},{ydata:.2f})",(xdata,ydata))
-
         self.name = self.markerObj.get_label()
 
 class LineMarker(Marker):
@@ -117,7 +119,7 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect("button_press_event",self.addVerticalMarker)
         self.staticCanvas.mpl_connect("button_press_event",self.addHorizontalMarker)
 
-        #name of object : Object - contains all lines and markers on plot
+        #name of marker : Marker Object 
         self.markers = {}
         #name of line : MainLine object
         self.lines = {}
@@ -159,10 +161,11 @@ class customTab(QtWidgets.QWidget):
         #opens right click popup
             pickedItem = False
             if (event.button == 3):    
-                for _,marker in self.markers.items(): 
+                for marker in self.markers.values():
                     if marker.contains(event)[0]:
                         pickedItem = True
                         eventTrigger = marker
+                        break
                 
                 if (pickedItem == True):
                     self.createMarkerMenu(eventTrigger)
