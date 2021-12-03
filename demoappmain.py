@@ -32,14 +32,15 @@ class MainLine():
 
 class Marker():
     #marker contains marker object and annotation
-    def __init__(self,ax,typeOfMarker,color):
+    def __init__(self,ax,style,color):
         self.ax = ax
-        self.typeOfMarker = typeOfMarker
+        self.style = style
         self.color = color
         self.xdata = None
         self.ydata = None
         self.markerObj = None
         self.annotation = None
+        self.type = None
     
     def set_visible(self,bool):
         if self.markerObj is not None:
@@ -59,12 +60,13 @@ class Marker():
 
 class DotMarker(Marker):
     #dot marker that is put on lines
-    def __init__(self, ax, xdata, ydata, typeOfMarker, color):
-        super().__init__(ax, typeOfMarker, color)
+    def __init__(self, ax, xdata, ydata, style, color):
+        super().__init__(ax, style, color)
+        self.type = "dot"
         self.xdata = xdata
         self.ydata = ydata
     
-        listoflines = self.ax.plot(self.xdata,self.ydata,typeOfMarker)
+        listoflines = self.ax.plot(self.xdata,self.ydata,style)
         self.markerObj = listoflines[0]
         if self.color is not None:
             self.markerObj.set_color(self.color)
@@ -73,32 +75,46 @@ class DotMarker(Marker):
 
 class LineMarker(Marker):
     #dashed line marker
-    def __init__(self,ax,typeOfMarker,color):
-        super().__init__(ax,typeOfMarker,color)
+    def __init__(self,ax,style,color):
+        super().__init__(ax,style,color)
+    
 
 class HorizontalMarker(LineMarker):
-    def __init__(self, ax, ydata, typeOfMarker, color):
-        super().__init__(ax, typeOfMarker, color)
+    def __init__(self, ax, ydata, style, color):
+        super().__init__(ax, style, color)
         self.ydata = ydata
+        self.type = "horizontal"
 
-        self.markerObj = self.ax.axhline(self.ydata)
-        self.markerObj.set_linestyle(self.typeOfMarker)
+        self.markerObj = self.ax.axhline(self.ydata,picker=True)
+        self.markerObj.set_linestyle(self.style)
         self.markerObj.set_color(self.color)
         self.annotation = self.ax.annotate(f"({self.ydata:.2f})",(self.ax.get_xlim()[0],self.ydata))
 
         self.name = self.markerObj.get_label()
 
-class VerticalMarker(LineMarker):
-    def __init__(self, ax, xdata, typeOfMarker, color):
-        super().__init__(ax, typeOfMarker, color)
-        self.xdata = xdata
+    def move(self,ydata):
+        self.markerObj.set_ydata(ydata) 
+        self.annotation.set_y(ydata)
+        self.annotation.set_text(f"({ydata:.2f})")
 
-        self.markerObj = self.ax.axvline(self.xdata)
-        self.markerObj.set_linestyle(self.typeOfMarker)
+class VerticalMarker(LineMarker):
+    def __init__(self, ax, xdata, style, color):
+        super().__init__(ax, style, color)
+        self.xdata = xdata
+        self.type = "vertical"
+
+        self.markerObj = self.ax.axvline(self.xdata,picker=True)
+        self.markerObj.set_linestyle(self.style)
         self.markerObj.set_color(self.color)
         self.annotation = self.ax.annotate(f"({self.xdata:.2f})",(self.xdata,self.ax.get_ylim()[0]))
 
         self.name = self.markerObj.get_label()
+
+    def move(self,xdata):
+        self.markerObj.set_xdata(xdata) 
+        self.annotation.set_x(xdata)
+        self.annotation.set_text(f"({xdata:.2f})")
+
 
 
 class customTab(QtWidgets.QWidget):
@@ -118,11 +134,32 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect("button_press_event",self.addDotMarker)
         self.staticCanvas.mpl_connect("button_press_event",self.addVerticalMarker)
         self.staticCanvas.mpl_connect("button_press_event",self.addHorizontalMarker)
+        self.staticCanvas.mpl_connect('button_release_event', self.on_release)
+        self.staticCanvas.mpl_connect('pick_event', self.pickMarker)
+        self.staticCanvas.mpl_connect('motion_notify_event', self.on_motion)        
+        
+        self.markers = {} #name of marker : Marker Object
+        self.lines = {} #name of line : MainLine object
 
-        #name of marker : Marker Object 
-        self.markers = {}
-        #name of line : MainLine object
-        self.lines = {}
+        self.current_marker = None
+    
+    def on_release(self,event):
+        self.current_marker = None
+
+    def pickMarker(self,event):
+        if(event.mouseevent.button==1):
+            self.current_marker = self.markers[event.artist.get_label()]
+
+    def on_motion(self, event):
+        if self.current_marker is None:
+            return
+        if self.current_marker.type == "horizontal":
+            self.current_marker.move(event.ydata)
+        elif self.current_marker.type == "vertical":
+            self.current_marker.move(event.xdata)    
+
+        self.staticCanvas.draw()
+
 
     def addDotMarker(self,event):
         if(event.button==1):
