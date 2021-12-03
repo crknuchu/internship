@@ -175,8 +175,11 @@ class customTab(QtWidgets.QWidget):
         self.markerMenu.popup(QCursor.pos())
         action = self.markerMenu.exec()
         if action is not None:
-            eventTrigger.remove()
-            del self.markers[eventTrigger.name] #ovde mozda neka funkcija
+            self.removeMarker(eventTrigger)
+
+    def removeMarker(self,marker):
+        marker.remove()
+        del self.markers[marker.name]
 
     def createDefaultMenu(self):
         self.contextMenu = QtWidgets.QMenu(self)
