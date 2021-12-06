@@ -10,6 +10,7 @@ import pandas
 from matplotlib.backends.backend_qtagg import FigureCanvas,NavigationToolbar2QT
 import os
 import argparse
+import numpy as np
 
 class MainLine():
     #has line object and list of markers on the line
@@ -137,7 +138,7 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect('button_release_event', self.on_release)
         self.staticCanvas.mpl_connect('pick_event', self.pickMarker)
         self.staticCanvas.mpl_connect('motion_notify_event', self.on_motion)        
-        
+
         self.markers = {} #name of marker : Marker Object
         self.lines = {} #name of line : MainLine object
 
@@ -163,9 +164,11 @@ class customTab(QtWidgets.QWidget):
 
     def addDotMarker(self,event):
         if(event.button==1):
-            for _,line in self.lines.items():
+            for line in self.lines.values():
                 if line.lineObj.contains(event)[0]:
-                    marker = DotMarker(self.ax,event.xdata,event.ydata,"o",None)
+                    x = event.xdata
+                    y = np.interp(x,line.lineObj.get_xdata(),line.lineObj.get_ydata())
+                    marker = DotMarker(self.ax,x,y,"o",None)
                     self.lines[line.name].markerList.append(marker)
                     self.markers[marker.name] = marker
 
@@ -384,10 +387,17 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def plot(self,filename):
         #plots data from filename
         df = pandas.read_csv(filename)
+        #print(df["Srbija"])
         self.currentWidget.ax = self.currentWidget.staticCanvas.figure.subplots()
         df.plot(x="godina",ax=self.currentWidget.ax)
         for line in self.currentWidget.ax.get_lines(): #adds lines to dict
             self.currentWidget.lines[line.get_label()] = MainLine(line)
+        #x = df["godina"].to_numpy()
+        #f = df["Srbija"].to_numpy()
+        #g = df["Kina"].to_numpy()
+        #idx = np.argwhere(np.diff(np.sign(f - g))).flatten()
+        #self.currentWidget.ax.plot(x[idx], f[idx], 'ro')
+        #print(idx)
         self.currentWidget.ax.set_ylabel("BDP")
         self.currentWidget.ax.set_title(os.path.basename(filename))
 
