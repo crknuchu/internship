@@ -78,14 +78,14 @@ class DotMarker(Marker):
         self.annotation = self.ax.annotate(f"({self.xdata:.2f},{self.ydata:.2f})",(self.xdata,self.ydata))
         self.name = self.markerObj.get_label()
     
-    def move(self,ax,xdata):
+    def move(self,xdata):
         self.markerObj.set_xdata(xdata)
         estimated_ydata = np.interp(xdata,self.parentLine.lineObj.get_xdata(),self.parentLine.lineObj.get_ydata())
         self.markerObj.set_ydata(estimated_ydata) 
         self.annotation.set_x(xdata)
         self.annotation.set_y(estimated_ydata)
         self.annotation.set_text(f"({xdata:.2f},{estimated_ydata:.2f})")
-        self.xpixel,self.ypixel = ax.transData.transform((xdata,estimated_ydata))
+        self.xpixel,self.ypixel = self.ax.transData.transform((xdata,estimated_ydata))
 
 class LineMarker(Marker):
     #dashed line marker
@@ -179,7 +179,7 @@ class customTab(QtWidgets.QWidget):
         elif self.current_marker.type == "vertical": #move based on marker type
             self.current_marker.move(event.xdata)
         elif self.current_marker.type == "dot":
-            self.current_marker.move(self.ax,event.xdata)
+            self.current_marker.move(event.xdata)
 
         self.staticCanvas.draw()
 
