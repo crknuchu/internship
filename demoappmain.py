@@ -79,6 +79,8 @@ class DotMarker(Marker):
         self.name = self.markerObj.get_label()
     
     def move(self,xdata):
+        if xdata is None:
+            return
         self.markerObj.set_xdata(xdata)
         estimated_ydata = np.interp(xdata,self.parentLine.lineObj.get_xdata(),self.parentLine.lineObj.get_ydata())
         self.markerObj.set_ydata(estimated_ydata) 
@@ -106,6 +108,8 @@ class HorizontalMarker(LineMarker):
         self.name = self.markerObj.get_label()
 
     def move(self,ydata):
+        if ydata is None:
+            return
         self.markerObj.set_ydata(ydata) 
         self.annotation.set_y(ydata)
         self.annotation.set_text(f"({ydata:.2f})")
@@ -124,9 +128,12 @@ class VerticalMarker(LineMarker):
         self.name = self.markerObj.get_label()
 
     def move(self,xdata):
+        if xdata is None:
+            return
         self.markerObj.set_xdata(xdata) 
         self.annotation.set_x(xdata)
         self.annotation.set_text(f"({xdata:.2f})")
+        #print(xdata)
 
 class customTab(QtWidgets.QWidget):
     def __init__(self):
@@ -155,6 +162,7 @@ class customTab(QtWidgets.QWidget):
     
     def on_release(self,event):
         self.current_marker = None
+        print(event.xdata)
 
     def pick_event(self,event):
         if(event.mouseevent.button==1):
