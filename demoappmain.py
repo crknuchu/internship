@@ -73,8 +73,11 @@ class DotMarker(Marker):
     
         listoflines = self.ax.plot(self.xdata,self.ydata,style,picker=6)
         self.markerObj = listoflines[0]
-        if self.color is not None:
-            self.markerObj.set_color(self.color)
+        parentcolor = self.parentLine.lineObj.get_color()
+        #if self.color is not None:
+        #    self.markerObj.set_color(self.color)
+        self.color = parentcolor
+        self.markerObj.set_color(self.color)
         self.annotation = self.ax.annotate(f"({self.xdata:.2f},{self.ydata:.2f})",(self.xdata,self.ydata))
         self.name = self.markerObj.get_label()
     
