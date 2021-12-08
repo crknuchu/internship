@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets
 from PyQt6.QtGui import QCursor
-from matplotlib.backend_bases import MouseEvent
+from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from numpy import e
@@ -10,6 +10,10 @@ import pandas
 from matplotlib.backends.backend_qtagg import FigureCanvas,NavigationToolbar2QT
 import os
 import argparse
+import numpy as np
+from matplotlib.backend_bases import PickEvent
+import math
+from matplotlib.backend_bases import NavigationToolbar2
 
 class MainLine():
     #has line object and list of markers on the line
@@ -60,25 +64,51 @@ class Marker():
 
 class DotMarker(Marker):
     #dot marker that is put on lines
-    def __init__(self, ax, xdata, ydata, style, color):
+    def __init__(self, ax, xdata, ydata, style, color,line):
         super().__init__(ax, style, color)
         self.type = "dot"
         self.xdata = xdata
         self.ydata = ydata
+        self.xpixel,self.ypixel = ax.transData.transform((xdata,ydata)) #transforms data coords to pixel coords
+        self.parentLine = line
     
-        listoflines = self.ax.plot(self.xdata,self.ydata,style)
+        listoflines = self.ax.plot(self.xdata,self.ydata,style,picker=6)
         self.markerObj = listoflines[0]
-        if self.color is not None:
-            self.markerObj.set_color(self.color)
-        self.annotation = self.ax.annotate(f"({xdata:.2f},{ydata:.2f})",(xdata,ydata))
+        parentcolor = self.parentLine.lineObj.get_color()
+        self.color = parentcolor
+        self.markerObj.set_color(self.color)
+        self.annotation = self.ax.annotate(f"({self.xdata:.2f},{self.ydata:.2f})",(self.xdata,self.ydata))
         self.name = self.markerObj.get_label()
+    
+        self.endoflineleft = self.parentLine.lineObj.get_xdata()[0] #left edge of line
+        self.endoflineright = self.parentLine.lineObj.get_xdata()[-1] #right edge of line
+
+    def move(self,xdata):
+        if xdata is None:
+            return
+        if(xdata<self.endoflineleft or xdata>self.endoflineright):
+            return
+        self.markerObj.set_xdata(xdata)
+        estimated_ydata = np.interp(xdata,self.parentLine.lineObj.get_xdata(),self.parentLine.lineObj.get_ydata()) #gets intersection of x and parend line
+        self.markerObj.set_ydata(estimated_ydata) 
+        self.annotation.set_x(xdata)
+        self.annotation.set_y(estimated_ydata)
+        self.annotation.set_text(f"({xdata:.2f},{estimated_ydata:.2f})")
+        self.xpixel,self.ypixel = self.ax.transData.transform((xdata,estimated_ydata)) #update coords after moving
+
+        self.checkEdges(estimated_ydata)
+    
+    def checkEdges(self,ydata):
+        if (ydata > self.ax.get_ylim()[1] or ydata < self.ax.get_ylim()[0]): #turns off annotation if marker leaves canvas
+            self.annotation.set_visible(False)
+        else:
+            self.annotation.set_visible(True)
 
 class LineMarker(Marker):
     #dashed line marker
     def __init__(self,ax,style,color):
         super().__init__(ax,style,color)
     
-
 class HorizontalMarker(LineMarker):
     def __init__(self, ax, ydata, style, color):
         super().__init__(ax, style, color)
@@ -93,6 +123,8 @@ class HorizontalMarker(LineMarker):
         self.name = self.markerObj.get_label()
 
     def move(self,ydata):
+        if ydata is None:
+            return
         self.markerObj.set_ydata(ydata) 
         self.annotation.set_y(ydata)
         self.annotation.set_text(f"({ydata:.2f})")
@@ -111,11 +143,11 @@ class VerticalMarker(LineMarker):
         self.name = self.markerObj.get_label()
 
     def move(self,xdata):
+        if xdata is None:
+            return
         self.markerObj.set_xdata(xdata) 
         self.annotation.set_x(xdata)
         self.annotation.set_text(f"({xdata:.2f})")
-
-
 
 class customTab(QtWidgets.QWidget):
     def __init__(self):
@@ -131,43 +163,71 @@ class customTab(QtWidgets.QWidget):
         self.removeLegendButton.pressed.connect(self.removeLegendPressed)
         self.staticCanvas.mpl_connect("motion_notify_event",self.lineHoverEvent)
         self.staticCanvas.mpl_connect("button_press_event",self.rightClickMenuEvent)
-        self.staticCanvas.mpl_connect("button_press_event",self.addDotMarker)
         self.staticCanvas.mpl_connect("button_press_event",self.addVerticalMarker)
         self.staticCanvas.mpl_connect("button_press_event",self.addHorizontalMarker)
         self.staticCanvas.mpl_connect('button_release_event', self.on_release)
-        self.staticCanvas.mpl_connect('pick_event', self.pickMarker)
-        self.staticCanvas.mpl_connect('motion_notify_event', self.on_motion)        
-        
+        self.staticCanvas.mpl_connect('motion_notify_event', self.on_motion)
+        self.staticCanvas.mpl_connect('pick_event', self.pick_event)
+
+        self.staticCanvas.mpl_connect("home_event",self.handle_home)
+
         self.markers = {} #name of marker : Marker Object
         self.lines = {} #name of line : MainLine object
-
         self.current_marker = None
-    
+
+        #self.home = self.navBar.
+
+    def new_home(self, *args, **kwargs):
+        s = 'home_event'
+        event = Event(s, self)
+        event.foo = 100
+        self.staticCanvas.callbacks.process(s, event)
+        self.home(self, *args, **kwargs)
+
+        self.navBar.home = self.new_home
+
+    def handle_home(evt):
+        print ("new_home")
+        print (evt.foo)
+
     def on_release(self,event):
         self.current_marker = None
 
-    def pickMarker(self,event):
-        if(event.mouseevent.button==1):
-            self.current_marker = self.markers[event.artist.get_label()]
-
+    def pick_event(self,event):
+        if(event.mouseevent.button==1): #left click
+            if event.artist.get_label() in self.lines: #if artist is line
+                line = self.lines[event.artist.get_label()]
+                if line.markerList:
+                    for marker in line.markerList: #if marker is too close to another marker, disable adding a new one
+                        dist = math.hypot(marker.xpixel - event.mouseevent.x, marker.ypixel - event.mouseevent.y)
+                        if dist < 12:
+                            return
+                    self.addDotMarker(event)
+                else:
+                    self.addDotMarker(event)
+            elif event.artist.get_label() in self.markers:
+                self.current_marker = self.markers[event.artist.get_label()]  
+            
     def on_motion(self, event):
         if self.current_marker is None:
             return
         if self.current_marker.type == "horizontal":
             self.current_marker.move(event.ydata)
-        elif self.current_marker.type == "vertical":
-            self.current_marker.move(event.xdata)    
+        elif self.current_marker.type == "vertical": #move based on marker type
+            self.current_marker.move(event.xdata)
+        elif self.current_marker.type == "dot":
+            self.current_marker.move(event.xdata)
 
         self.staticCanvas.draw()
 
-
     def addDotMarker(self,event):
-        if(event.button==1):
-            for _,line in self.lines.items():
-                if line.lineObj.contains(event)[0]:
-                    marker = DotMarker(self.ax,event.xdata,event.ydata,"o",None)
-                    self.lines[line.name].markerList.append(marker)
-                    self.markers[marker.name] = marker
+            line = self.lines[event.artist.get_label()]
+            x = event.mouseevent.xdata
+            estimated_ydata = np.interp(x,line.lineObj.get_xdata(),line.lineObj.get_ydata()) #gets intersection of vertical line from x to line
+            marker = DotMarker(self.ax,x,estimated_ydata,"o",None,line)
+            self.lines[line.name].markerList.append(marker)
+            self.markers[marker.name] = marker
+            self.staticCanvas.draw()
 
     def addVerticalMarker(self,event):
         if (event.ydata):               #calculates 1/20 between max y value and min y value
@@ -239,10 +299,15 @@ class customTab(QtWidgets.QWidget):
         #thickens line when mouse hover
         legend = self.ax.legend()
         for line in self.ax.get_lines():
+            #line.set_picker(True)
             if line.contains(event)[0]: #returns bool if line contains event
                 line.set_linewidth(2)
+            #    line.set_picker(True)
             else:
                 line.set_linewidth(1)
+            #    line.set_picker(False)
+            
+            self.staticCanvas.blit(self.ax.bbox)
             self.staticCanvas.draw()
         
     def removeLegendPressed(self):
@@ -290,6 +355,7 @@ class customTab(QtWidgets.QWidget):
         self.removeLegendButton = QtWidgets.QPushButton("Remove Legend")
         self.staticCanvas = FigureCanvas(Figure())
         self.navBar = NavigationToolbar2QT(self.staticCanvas,self)
+        #self.navBar = NavigationToolbar2(self.staticCanvas)
         self.staticCanvas.hide()
         self.navBar.hide()
 
@@ -385,7 +451,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         #plots data from filename
         df = pandas.read_csv(filename)
         self.currentWidget.ax = self.currentWidget.staticCanvas.figure.subplots()
-        df.plot(x="godina",ax=self.currentWidget.ax)
+        df.plot(x="godina",ax=self.currentWidget.ax,picker=True)
         for line in self.currentWidget.ax.get_lines(): #adds lines to dict
             self.currentWidget.lines[line.get_label()] = MainLine(line)
         self.currentWidget.ax.set_ylabel("BDP")
