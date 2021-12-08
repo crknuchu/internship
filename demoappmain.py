@@ -1,6 +1,6 @@
 from PyQt6 import QtWidgets
 from PyQt6.QtGui import QCursor
-from matplotlib.backend_bases import MouseEvent
+from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from numpy import e
@@ -13,6 +13,7 @@ import argparse
 import numpy as np
 from matplotlib.backend_bases import PickEvent
 import math
+from matplotlib.backend_bases import NavigationToolbar2
 
 class MainLine():
     #has line object and list of markers on the line
@@ -74,8 +75,6 @@ class DotMarker(Marker):
         listoflines = self.ax.plot(self.xdata,self.ydata,style,picker=6)
         self.markerObj = listoflines[0]
         parentcolor = self.parentLine.lineObj.get_color()
-        #if self.color is not None:
-        #    self.markerObj.set_color(self.color)
         self.color = parentcolor
         self.markerObj.set_color(self.color)
         self.annotation = self.ax.annotate(f"({self.xdata:.2f},{self.ydata:.2f})",(self.xdata,self.ydata))
@@ -97,7 +96,13 @@ class DotMarker(Marker):
         self.annotation.set_text(f"({xdata:.2f},{estimated_ydata:.2f})")
         self.xpixel,self.ypixel = self.ax.transData.transform((xdata,estimated_ydata)) #update coords after moving
 
-        
+        self.checkEdges(estimated_ydata)
+    
+    def checkEdges(self,ydata):
+        if (ydata > self.ax.get_ylim()[1] or ydata < self.ax.get_ylim()[0]): #turns off annotation if marker leaves canvas
+            self.annotation.set_visible(False)
+        else:
+            self.annotation.set_visible(True)
 
 class LineMarker(Marker):
     #dashed line marker
@@ -164,14 +169,29 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect('motion_notify_event', self.on_motion)
         self.staticCanvas.mpl_connect('pick_event', self.pick_event)
 
+        self.staticCanvas.mpl_connect("home_event",self.handle_home)
+
         self.markers = {} #name of marker : Marker Object
         self.lines = {} #name of line : MainLine object
         self.current_marker = None
 
-    
+        #self.home = self.navBar.
+
+    def new_home(self, *args, **kwargs):
+        s = 'home_event'
+        event = Event(s, self)
+        event.foo = 100
+        self.staticCanvas.callbacks.process(s, event)
+        self.home(self, *args, **kwargs)
+
+        self.navBar.home = self.new_home
+
+    def handle_home(evt):
+        print ("new_home")
+        print (evt.foo)
+
     def on_release(self,event):
         self.current_marker = None
-        #print(event.xdata)
 
     def pick_event(self,event):
         if(event.mouseevent.button==1): #left click
@@ -335,6 +355,7 @@ class customTab(QtWidgets.QWidget):
         self.removeLegendButton = QtWidgets.QPushButton("Remove Legend")
         self.staticCanvas = FigureCanvas(Figure())
         self.navBar = NavigationToolbar2QT(self.staticCanvas,self)
+        #self.navBar = NavigationToolbar2(self.staticCanvas)
         self.staticCanvas.hide()
         self.navBar.hide()
 
