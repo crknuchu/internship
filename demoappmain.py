@@ -78,8 +78,13 @@ class DotMarker(Marker):
         self.annotation = self.ax.annotate(f"({self.xdata:.2f},{self.ydata:.2f})",(self.xdata,self.ydata))
         self.name = self.markerObj.get_label()
     
+        self.endoflineleft = self.parentLine.lineObj.get_xdata()[0]
+        self.endoflineright = self.parentLine.lineObj.get_xdata()[-1]
+
     def move(self,xdata):
         if xdata is None:
+            return
+        if(xdata<self.endoflineleft or xdata>self.endoflineright):
             return
         self.markerObj.set_xdata(xdata)
         estimated_ydata = np.interp(xdata,self.parentLine.lineObj.get_xdata(),self.parentLine.lineObj.get_ydata())
@@ -88,6 +93,8 @@ class DotMarker(Marker):
         self.annotation.set_y(estimated_ydata)
         self.annotation.set_text(f"({xdata:.2f},{estimated_ydata:.2f})")
         self.xpixel,self.ypixel = self.ax.transData.transform((xdata,estimated_ydata))
+
+        
 
 class LineMarker(Marker):
     #dashed line marker
@@ -162,7 +169,7 @@ class customTab(QtWidgets.QWidget):
     
     def on_release(self,event):
         self.current_marker = None
-        print(event.xdata)
+        #print(event.xdata)
 
     def pick_event(self,event):
         if(event.mouseevent.button==1):
