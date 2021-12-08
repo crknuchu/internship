@@ -68,7 +68,7 @@ class DotMarker(Marker):
         self.type = "dot"
         self.xdata = xdata
         self.ydata = ydata
-        self.xpixel,self.ypixel = ax.transData.transform((xdata,ydata))
+        self.xpixel,self.ypixel = ax.transData.transform((xdata,ydata)) #transforms data coords to pixel coords
         self.parentLine = line
     
         listoflines = self.ax.plot(self.xdata,self.ydata,style,picker=6)
@@ -81,8 +81,8 @@ class DotMarker(Marker):
         self.annotation = self.ax.annotate(f"({self.xdata:.2f},{self.ydata:.2f})",(self.xdata,self.ydata))
         self.name = self.markerObj.get_label()
     
-        self.endoflineleft = self.parentLine.lineObj.get_xdata()[0]
-        self.endoflineright = self.parentLine.lineObj.get_xdata()[-1]
+        self.endoflineleft = self.parentLine.lineObj.get_xdata()[0] #left edge of line
+        self.endoflineright = self.parentLine.lineObj.get_xdata()[-1] #right edge of line
 
     def move(self,xdata):
         if xdata is None:
@@ -90,12 +90,12 @@ class DotMarker(Marker):
         if(xdata<self.endoflineleft or xdata>self.endoflineright):
             return
         self.markerObj.set_xdata(xdata)
-        estimated_ydata = np.interp(xdata,self.parentLine.lineObj.get_xdata(),self.parentLine.lineObj.get_ydata())
+        estimated_ydata = np.interp(xdata,self.parentLine.lineObj.get_xdata(),self.parentLine.lineObj.get_ydata()) #gets intersection of x and parend line
         self.markerObj.set_ydata(estimated_ydata) 
         self.annotation.set_x(xdata)
         self.annotation.set_y(estimated_ydata)
         self.annotation.set_text(f"({xdata:.2f},{estimated_ydata:.2f})")
-        self.xpixel,self.ypixel = self.ax.transData.transform((xdata,estimated_ydata))
+        self.xpixel,self.ypixel = self.ax.transData.transform((xdata,estimated_ydata)) #update coords after moving
 
         
 
@@ -143,7 +143,6 @@ class VerticalMarker(LineMarker):
         self.markerObj.set_xdata(xdata) 
         self.annotation.set_x(xdata)
         self.annotation.set_text(f"({xdata:.2f})")
-        #print(xdata)
 
 class customTab(QtWidgets.QWidget):
     def __init__(self):
@@ -175,8 +174,8 @@ class customTab(QtWidgets.QWidget):
         #print(event.xdata)
 
     def pick_event(self,event):
-        if(event.mouseevent.button==1):
-            if event.artist.get_label() in self.lines:
+        if(event.mouseevent.button==1): #left click
+            if event.artist.get_label() in self.lines: #if artist is line
                 line = self.lines[event.artist.get_label()]
                 if line.markerList:
                     for marker in line.markerList: #if marker is too close to another marker, disable adding a new one
