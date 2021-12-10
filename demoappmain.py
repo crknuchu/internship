@@ -71,7 +71,6 @@ class DotMarker(Marker):
         self.type = "dot"
         self.xdata = xdata
         self.ydata = ydata
-        self.xpixel,self.ypixel = ax.transData.transform((xdata,ydata)) #transforms data coords to pixel coords
         self.parentLine = line
     
         listoflines = self.ax.plot(self.xdata,self.ydata,style,picker=6)
@@ -92,11 +91,15 @@ class DotMarker(Marker):
             return
         self.markerObj.set_xdata(xdata)
         estimated_ydata = np.interp(xdata,self.parentLine.lineObj.get_xdata(),self.parentLine.lineObj.get_ydata()) #gets intersection of x and parend line
-        self.markerObj.set_ydata(estimated_ydata) 
-        self.annotation.set_x(xdata)
-        self.annotation.set_y(estimated_ydata)
-        self.annotation.set_text(f"({xdata:.2f},{estimated_ydata:.2f})")
-        self.xpixel,self.ypixel = self.ax.transData.transform((xdata,estimated_ydata)) #update coords after moving
+        self.xdata = xdata
+        self.ydata = estimated_ydata
+        self.markerObj.set_ydata(self.ydata) 
+        self.annotation.set_x(self.xdata) #moves the text of annotation
+        self.annotation.set_y(self.ydata)
+        self.annotation.set_text(f"({self.xdata:.2f},{self.ydata:.2f})")
+        self.annotation.xy = (self.xdata,self.ydata) #moves the annotation itself
+
+        self.checkEdges(self.xdata,self.ydata)
     
     def checkEdges(self,xdata,ydata):
         if (ydata > self.ax.get_ylim()[1] or ydata < self.ax.get_ylim()[0] or\
@@ -174,9 +177,24 @@ class Tab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect('motion_notify_event', self.on_motion)
         self.staticCanvas.mpl_connect('pick_event', self.pick_event)
 
+        self.ax = self.staticCanvas.figure.subplots()
+
         self.markers = {} #name of marker : Marker Object
         self.lines = {} #name of line : MainLine object
         self.current_marker = None
+
+        #self.ax.callbacks.connect('xlim_changed',self.x_pan_event)
+        #self.ax.callbacks.connect('ylim_changed',self.y_pan_event)
+
+    
+    def x_pan_event(self,event):
+        for marker in self.markers.values():
+            if marker.type == "dot":
+                marker.checkEdges()
+        #print(event.xdata,event.ydata)
+
+    def y_pan_event(self,event):
+        print("ypan")
 
     def on_release(self,event):
         self.current_marker = None
@@ -187,7 +205,7 @@ class Tab(QtWidgets.QWidget):
                 line = self.lines[event.artist.get_label()]
                 if line.markerList:
                     for marker in line.markerList: #if marker is too close to another marker, disable adding a new one
-                        dist = math.hypot(marker.xpixel - event.mouseevent.x, marker.ypixel - event.mouseevent.y)
+                        dist = math.hypot(marker.xdata - event.mouseevent.xdata, marker.ydata - event.mouseevent.ydata)
                         if dist < 12:
                             return
                     self.addDotMarker(event)
@@ -365,7 +383,6 @@ class Tab(QtWidgets.QWidget):
     
     def plot(self,filename):
         df = pandas.read_csv(filename)
-        self.ax = self.staticCanvas.figure.subplots()
         df.plot(x="godina",ax=self.ax,picker=True)
         for line in self.ax.get_lines(): #adds lines to dict
             self.lines[line.get_label()] = MainLine(line)
