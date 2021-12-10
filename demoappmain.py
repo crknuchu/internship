@@ -3,7 +3,7 @@ from PyQt6.QtGui import QCursor
 from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-from numpy import e
+from numpy import e, mat
 import demoapp
 import sys
 import pandas
@@ -14,6 +14,8 @@ import numpy as np
 from matplotlib.backend_bases import PickEvent
 import math
 from matplotlib.backend_bases import NavigationToolbar2
+import matplotlib.transforms
+import matplotlib.axes
 
 class MainLine():
     #has line object and list of markers on the line
@@ -96,10 +98,13 @@ class DotMarker(Marker):
         self.annotation.set_text(f"({xdata:.2f},{estimated_ydata:.2f})")
         self.xpixel,self.ypixel = self.ax.transData.transform((xdata,estimated_ydata)) #update coords after moving
 
-        self.checkEdges(estimated_ydata)
+        #self.checkEdges(xdata,estimated_ydata)
+        #print(self.markerObj.get_visible())
     
-    def checkEdges(self,ydata):
-        if (ydata > self.ax.get_ylim()[1] or ydata < self.ax.get_ylim()[0]): #turns off annotation if marker leaves canvas
+    def checkEdges(self,xdata,ydata):
+        print("11111111111111111111")
+        if (ydata > self.ax.get_ylim()[1] or ydata < self.ax.get_ylim()[0] or\
+            xdata > self.ax.get_xlim()[1] or xdata < self.ax.get_xlim()[0]): #turns off annotation if marker leaves canvas
             self.annotation.set_visible(False)
         else:
             self.annotation.set_visible(True)
@@ -115,10 +120,12 @@ class HorizontalMarker(LineMarker):
         self.ydata = ydata
         self.type = "horizontal"
 
+        tform = matplotlib.transforms.blended_transform_factory(self.ax.transAxes,self.ax.transData)
+
         self.markerObj = self.ax.axhline(self.ydata,picker=True)
         self.markerObj.set_linestyle(self.style)
         self.markerObj.set_color(self.color)
-        self.annotation = self.ax.annotate(f"({self.ydata:.2f})",(self.ax.get_xlim()[0],self.ydata))
+        self.annotation = self.ax.annotate(f"({self.ydata:.2f})",(0,self.ydata),xycoords=tform) #xycords=tform not transform=tform
 
         self.name = self.markerObj.get_label()
 
@@ -127,7 +134,7 @@ class HorizontalMarker(LineMarker):
             return
         self.markerObj.set_ydata(ydata) 
         self.annotation.set_y(ydata)
-        self.annotation.set_text(f"({ydata:.2f})")
+        self.annotation.set_text(f"({ydata:.2f})")    
 
 class VerticalMarker(LineMarker):
     def __init__(self, ax, xdata, style, color):
@@ -169,26 +176,23 @@ class customTab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect('motion_notify_event', self.on_motion)
         self.staticCanvas.mpl_connect('pick_event', self.pick_event)
 
-        self.staticCanvas.mpl_connect("home_event",self.handle_home)
-
         self.markers = {} #name of marker : Marker Object
         self.lines = {} #name of line : MainLine object
         self.current_marker = None
 
-        #self.home = self.navBar.
+    
+    #def motion_2()
 
-    def new_home(self, *args, **kwargs):
-        s = 'home_event'
-        event = Event(s, self)
-        event.foo = 100
-        self.staticCanvas.callbacks.process(s, event)
-        self.home(self, *args, **kwargs)
+        #self._timer = self.staticCanvas.new_timer(50)
+        #self._timer.add_callback(self.update_canvas)
+        #self._timer.start()
 
-        self.navBar.home = self.new_home
-
-    def handle_home(evt):
-        print ("new_home")
-        print (evt.foo)
+    def update_canvas(self):
+        for marker in self.markers.values():
+            if marker.type == "horizontal":
+                marker.move(marker.set_x())
+                self.staticCanvas.draw()
+        #print("test")
 
     def on_release(self,event):
         self.current_marker = None
@@ -234,12 +238,15 @@ class customTab(QtWidgets.QWidget):
             if(event.button==1) and (event.ydata <= self.calculateMarkerEdge(self.ax.get_ylim()[0],self.ax.get_ylim()[1],20)): 
                 verticalMarker = VerticalMarker(self.ax,event.xdata,"--","red")
                 self.markers[verticalMarker.name] = verticalMarker
+                self.staticCanvas.draw()
 
     def addHorizontalMarker(self,event):
         if (event.xdata):
             if(event.button==1) and (event.xdata <= self.calculateMarkerEdge(self.ax.get_xlim()[0],self.ax.get_xlim()[1],20)): 
                 horizontalMarker = HorizontalMarker(self.ax,event.ydata,"--","red")
+                #horizontalMarker = NewHorizontalMarker(self.ax,event.ydata,"--","red")
                 self.markers[horizontalMarker.name] = horizontalMarker
+                self.staticCanvas.draw()
 
     def calculateMarkerEdge(self,a,b,fraction):
         return (b-a)/fraction + a
