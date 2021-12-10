@@ -120,7 +120,7 @@ class HorizontalMarker(LineMarker):
         self.ydata = ydata
         self.type = "horizontal"
 
-        tform = matplotlib.transforms.blended_transform_factory(self.ax.transAxes,self.ax.transData)
+        tform = matplotlib.transforms.blended_transform_factory(self.ax.transAxes,self.ax.transData) #x uses [0,1] range, y uses range of data
 
         self.markerObj = self.ax.axhline(self.ydata,picker=True)
         self.markerObj.set_linestyle(self.style)
@@ -142,10 +142,12 @@ class VerticalMarker(LineMarker):
         self.xdata = xdata
         self.type = "vertical"
 
+        tform = matplotlib.transforms.blended_transform_factory(self.ax.transData,self.ax.transAxes)
+
         self.markerObj = self.ax.axvline(self.xdata,picker=True)
         self.markerObj.set_linestyle(self.style)
         self.markerObj.set_color(self.color)
-        self.annotation = self.ax.annotate(f"({self.xdata:.2f})",(self.xdata,self.ax.get_ylim()[0]))
+        self.annotation = self.ax.annotate(f"({self.xdata:.2f})",(self.xdata,0),xycoords=tform)
 
         self.name = self.markerObj.get_label()
 
