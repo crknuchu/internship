@@ -97,12 +97,8 @@ class DotMarker(Marker):
         self.annotation.set_y(estimated_ydata)
         self.annotation.set_text(f"({xdata:.2f},{estimated_ydata:.2f})")
         self.xpixel,self.ypixel = self.ax.transData.transform((xdata,estimated_ydata)) #update coords after moving
-
-        #self.checkEdges(xdata,estimated_ydata)
-        #print(self.markerObj.get_visible())
     
     def checkEdges(self,xdata,ydata):
-        print("11111111111111111111")
         if (ydata > self.ax.get_ylim()[1] or ydata < self.ax.get_ylim()[0] or\
             xdata > self.ax.get_xlim()[1] or xdata < self.ax.get_xlim()[0]): #turns off annotation if marker leaves canvas
             self.annotation.set_visible(False)
@@ -158,7 +154,7 @@ class VerticalMarker(LineMarker):
         self.annotation.set_x(xdata)
         self.annotation.set_text(f"({xdata:.2f})")
 
-class customTab(QtWidgets.QWidget):
+class Tab(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
 
@@ -181,7 +177,6 @@ class customTab(QtWidgets.QWidget):
         self.markers = {} #name of marker : Marker Object
         self.lines = {} #name of line : MainLine object
         self.current_marker = None
-
 
     def on_release(self,event):
         self.current_marker = None
@@ -295,13 +290,10 @@ class customTab(QtWidgets.QWidget):
         #thickens line when mouse hover
         legend = self.ax.legend()
         for line in self.ax.get_lines():
-            #line.set_picker(True)
             if line.contains(event)[0]: #returns bool if line contains event
                 line.set_linewidth(2)
-            #    line.set_picker(True)
             else:
                 line.set_linewidth(1)
-            #    line.set_picker(False)
             
             self.staticCanvas.blit(self.ax.bbox)
             self.staticCanvas.draw()
@@ -351,7 +343,6 @@ class customTab(QtWidgets.QWidget):
         self.removeLegendButton = QtWidgets.QPushButton("Remove Legend")
         self.staticCanvas = FigureCanvas(Figure())
         self.navBar = NavigationToolbar2QT(self.staticCanvas,self)
-        #self.navBar = NavigationToolbar2(self.staticCanvas)
         self.staticCanvas.hide()
         self.navBar.hide()
 
@@ -371,6 +362,15 @@ class customTab(QtWidgets.QWidget):
         self.inputLayoutRight.addWidget(self.dropDownMenu)
         self.inputLayoutRight.addWidget(self.checkBox)
         self.inputLayoutRight.addWidget(self.removeLegendButton) 
+    
+    def plot(self,filename):
+        df = pandas.read_csv(filename)
+        self.ax = self.staticCanvas.figure.subplots()
+        df.plot(x="godina",ax=self.ax,picker=True)
+        for line in self.ax.get_lines(): #adds lines to dict
+            self.lines[line.get_label()] = MainLine(line)
+        self.ax.set_ylabel("BDP")
+        self.ax.set_title(os.path.basename(filename))
 
 
 class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
@@ -398,8 +398,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
                 print("file doesn't exist")
                 exit()
             self.openCSVFile(self.args.path)
-
-
+        
         self.addNewTabButton.pressed.connect(self.addNewTab)
         self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
         self.actionOpen.triggered.connect(self.fileOpen)
@@ -441,17 +440,11 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         #opens csv file and plots it on canvas
         self.removeTextOutput()
         self.addCanvas()
-        self.plot(filename)
+        self.drawCanvas(filename)
 
-    def plot(self,filename):
+    def drawCanvas(self,filename):
         #plots data from filename
-        df = pandas.read_csv(filename)
-        self.currentWidget.ax = self.currentWidget.staticCanvas.figure.subplots()
-        df.plot(x="godina",ax=self.currentWidget.ax,picker=True)
-        for line in self.currentWidget.ax.get_lines(): #adds lines to dict
-            self.currentWidget.lines[line.get_label()] = MainLine(line)
-        self.currentWidget.ax.set_ylabel("BDP")
-        self.currentWidget.ax.set_title(os.path.basename(filename))
+        self.currentWidget.plot(filename)
 
     def removeTextOutput(self):
         self.currentWidget.tabLayout.removeWidget(self.currentWidget.textOutput)
@@ -468,7 +461,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.removeTab(index)
 
     def addNewTab(self):
-        self.currentTab = customTab()
+        self.currentTab = Tab()
         self.tabWidget.addTab(self.currentTab,"New Tab")
         self.tabWidget.setCurrentWidget(self.currentTab)
 
