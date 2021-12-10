@@ -182,19 +182,6 @@ class customTab(QtWidgets.QWidget):
         self.lines = {} #name of line : MainLine object
         self.current_marker = None
 
-    
-    #def motion_2()
-
-        #self._timer = self.staticCanvas.new_timer(50)
-        #self._timer.add_callback(self.update_canvas)
-        #self._timer.start()
-
-    def update_canvas(self):
-        for marker in self.markers.values():
-            if marker.type == "horizontal":
-                marker.move(marker.set_x())
-                self.staticCanvas.draw()
-        #print("test")
 
     def on_release(self,event):
         self.current_marker = None
