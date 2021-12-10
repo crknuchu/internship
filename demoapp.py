@@ -12,11 +12,12 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 600)
+        MainWindow.resize(800, 700)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.verticalLayout.setObjectName("verticalLayout")
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
-        self.tabWidget.setGeometry(QtCore.QRect(50, 50, 700, 450))
         self.tabWidget.setObjectName("tabWidget")
         self.tab = QtWidgets.QWidget()
         self.tab.setObjectName("tab")
@@ -24,6 +25,7 @@ class Ui_MainWindow(object):
         self.tab_2 = QtWidgets.QWidget()
         self.tab_2.setObjectName("tab_2")
         self.tabWidget.addTab(self.tab_2, "")
+        self.verticalLayout.addWidget(self.tabWidget)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
@@ -36,6 +38,8 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.actionOpen = QtGui.QAction(MainWindow)
         self.actionOpen.setObjectName("actionOpen")
+        self.actionOpen_CSV = QtGui.QAction(MainWindow)
+        self.actionOpen_CSV.setObjectName("actionOpen_CSV")
         self.menuFile.addAction(self.actionOpen)
         self.menubar.addAction(self.menuFile.menuAction())
 
@@ -49,6 +53,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Tab 2"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.actionOpen.setText(_translate("MainWindow", "Open"))
+        self.actionOpen_CSV.setText(_translate("MainWindow", "Open CSV"))
 
 
 if __name__ == "__main__":
