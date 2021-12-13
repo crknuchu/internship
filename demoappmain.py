@@ -183,19 +183,6 @@ class Tab(QtWidgets.QWidget):
         self.lines = {} #name of line : MainLine object
         self.current_marker = None
 
-        #self.ax.callbacks.connect('xlim_changed',self.x_pan_event)
-        #self.ax.callbacks.connect('ylim_changed',self.y_pan_event)
-
-    
-    def x_pan_event(self,event):
-        for marker in self.markers.values():
-            if marker.type == "dot":
-                marker.checkEdges()
-        #print(event.xdata,event.ydata)
-
-    def y_pan_event(self,event):
-        print("ypan")
-
     def on_release(self,event):
         self.current_marker = None
 
