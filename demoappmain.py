@@ -425,12 +425,18 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
         for continent in data['continents']:
             continentItem = QStandardItem(continent["name"])
+            continentItem.setEditable(False)
             root.appendRow(continentItem)
             for country in continent["countries"]:
                 countryItem = QStandardItem(country["name"])
+                countryItem.setEditable(False)
                 continentItem.appendRow(countryItem)
-                countryData = (QStandardItem(str(country["gdp"])),QStandardItem(country["population"]))
-                countryItem.appendRow(countryData)
+                gdpItem = QStandardItem(country["gdp"])
+                gdpItem.setEditable(False)
+                populationItem = QStandardItem(country["population"])
+                populationItem.setEditable(False)
+                countryItem.appendRow((gdpItem,populationItem))
+                
         
         return standardModel
 
