@@ -18,6 +18,8 @@ import math
 from matplotlib.backend_bases import NavigationToolbar2
 import matplotlib.transforms
 import matplotlib.axes
+import json
+from PyQt6.QtGui import QStandardItem, QStandardItemModel
 
 class MainLine():
     #has line object and list of markers on the line
@@ -412,14 +414,38 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.currentChanged.connect(self.changeCurrentTab)
         self.actionDock.triggered.connect(self.addDock)
 
+    def fillStandardModel(self):
+        with open("drzave.json","r") as f:
+            data = json.load(f)
+        standardModel = QStandardItemModel(0,2,self)
+        standardModel.setHeaderData(0,QtCore.Qt.Orientation.Horizontal,"GDP per capita")
+        standardModel.setHeaderData(1,QtCore.Qt.Orientation.Horizontal,"Population")
+
+        root = standardModel.invisibleRootItem()
+
+        for continent in data['continents']:
+            continentItem = QStandardItem(continent["name"])
+            root.appendRow(continentItem)
+            for country in continent["countries"]:
+                countryItem = QStandardItem(country["name"])
+                continentItem.appendRow(countryItem)
+                countryData = (QStandardItem(str(country["gdp"])),QStandardItem(country["population"]))
+                countryItem.appendRow(countryData)
+        
+        return standardModel
+        
+
     def addDock(self):
         if not self.dock.isVisible():
             self.createDock()
     
     def createDock(self):
-        self.dock = QtWidgets.QDockWidget("Tree View")
         self.treeView = QtWidgets.QTreeView()
+        self.dock = QtWidgets.QDockWidget("Tree View")
         self.dock.setWidget(self.treeView)
+        self.treeView.setModel(self.fillStandardModel())
+        self.treeView.expandAll()
+        self.treeView.resizeColumnToContents(0)
         self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
 
