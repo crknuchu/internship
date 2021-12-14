@@ -1,5 +1,7 @@
+import PyQt6
 from PyQt6 import QtWidgets
-from PyQt6.QtGui import QCursor
+from PyQt6 import QtCore
+from PyQt6.QtGui import QAction, QCursor
 from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
@@ -16,6 +18,8 @@ import math
 from matplotlib.backend_bases import NavigationToolbar2
 import matplotlib.transforms
 import matplotlib.axes
+import json
+from PyQt6.QtGui import QStandardItem, QStandardItemModel
 
 class MainLine():
     #has line object and list of markers on the line
@@ -388,9 +392,10 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.addNewTabButton = QtWidgets.QPushButton()
         self.addNewTabButton.setText("+")
         self.tabWidget.setCornerWidget(self.addNewTabButton)
-
         self.addNewTab()
         self.currentWidget = self.tabWidget.currentWidget()
+        self.createDock()
+
         
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument("-p","--path",type=str)
@@ -407,6 +412,42 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
         self.actionOpen.triggered.connect(self.fileOpen)
         self.tabWidget.currentChanged.connect(self.changeCurrentTab)
+        self.actionDock.triggered.connect(self.addDock)
+
+    def fillStandardModel(self):
+        with open("drzave.json","r") as f:
+            data = json.load(f)
+        standardModel = QStandardItemModel(0,2,self)
+        standardModel.setHeaderData(0,QtCore.Qt.Orientation.Horizontal,"GDP per capita")
+        standardModel.setHeaderData(1,QtCore.Qt.Orientation.Horizontal,"Population")
+
+        root = standardModel.invisibleRootItem()
+
+        for continent in data['continents']:
+            continentItem = QStandardItem(continent["name"])
+            root.appendRow(continentItem)
+            for country in continent["countries"]:
+                countryItem = QStandardItem(country["name"])
+                continentItem.appendRow(countryItem)
+                countryData = (QStandardItem(str(country["gdp"])),QStandardItem(country["population"]))
+                countryItem.appendRow(countryData)
+        
+        return standardModel
+        
+
+    def addDock(self):
+        if not self.dock.isVisible():
+            self.createDock()
+    
+    def createDock(self):
+        self.treeView = QtWidgets.QTreeView()
+        self.dock = QtWidgets.QDockWidget("Tree View")
+        self.dock.setWidget(self.treeView)
+        self.treeView.setModel(self.fillStandardModel())
+        self.treeView.expandAll()
+        self.treeView.resizeColumnToContents(0)
+        self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
 
     def changeCurrentTab(self):
         self.currentWidget = self.tabWidget.currentWidget()
