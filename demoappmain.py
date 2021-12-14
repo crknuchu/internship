@@ -1,4 +1,6 @@
+import PyQt6
 from PyQt6 import QtWidgets
+from PyQt6 import QtCore
 from PyQt6.QtGui import QCursor
 from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.figure import Figure
@@ -389,6 +391,15 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.addNewTabButton.setText("+")
         self.tabWidget.setCornerWidget(self.addNewTabButton)
 
+        self.dock = QtWidgets.QDockWidget("Tree View")
+        self.treeView = QtWidgets.QTreeView()
+        #self.treeView.setGeometry(200,200,200,200)
+        self.dock.setWidget(self.treeView)
+        #self.dock.setFloating(False)
+        self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
+
+
         self.addNewTab()
         self.currentWidget = self.tabWidget.currentWidget()
         
@@ -407,6 +418,11 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
         self.actionOpen.triggered.connect(self.fileOpen)
         self.tabWidget.currentChanged.connect(self.changeCurrentTab)
+
+        #self.treeView = QtWidgets.QTreeView()
+        #self.treeView.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
+        #self.treeView.raise_()
+        #self.treeView.WindowStays
 
     def changeCurrentTab(self):
         self.currentWidget = self.tabWidget.currentWidget()
