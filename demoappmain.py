@@ -392,11 +392,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.setCornerWidget(self.addNewTabButton)
         self.addNewTab()
         self.currentWidget = self.tabWidget.currentWidget()
-        self.dock = QtWidgets.QDockWidget("Tree View")
-        self.treeView = QtWidgets.QTreeView()
-        self.dock.setWidget(self.treeView)
-        self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
-        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
+        self.createDock()
 
         
         self.parser = argparse.ArgumentParser()
@@ -414,11 +410,18 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
         self.actionOpen.triggered.connect(self.fileOpen)
         self.tabWidget.currentChanged.connect(self.changeCurrentTab)
+        self.actionDock.triggered.connect(self.addDock)
 
-        #self.treeView = QtWidgets.QTreeView()
-        #self.treeView.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
-        #self.treeView.raise_()
-        #self.treeView.WindowStays
+    def addDock(self):
+        if not self.dock.isVisible():
+            self.createDock()
+    
+    def createDock(self):
+        self.dock = QtWidgets.QDockWidget("Tree View")
+        self.treeView = QtWidgets.QTreeView()
+        self.dock.setWidget(self.treeView)
+        self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
+        self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
 
     def changeCurrentTab(self):
         self.currentWidget = self.tabWidget.currentWidget()
