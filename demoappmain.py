@@ -1,7 +1,7 @@
 import PyQt6
 from PyQt6 import QtWidgets
 from PyQt6 import QtCore
-from PyQt6.QtGui import QCursor
+from PyQt6.QtGui import QAction, QCursor
 from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
@@ -390,18 +390,14 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.addNewTabButton = QtWidgets.QPushButton()
         self.addNewTabButton.setText("+")
         self.tabWidget.setCornerWidget(self.addNewTabButton)
-
+        self.addNewTab()
+        self.currentWidget = self.tabWidget.currentWidget()
         self.dock = QtWidgets.QDockWidget("Tree View")
         self.treeView = QtWidgets.QTreeView()
-        #self.treeView.setGeometry(200,200,200,200)
         self.dock.setWidget(self.treeView)
-        #self.dock.setFloating(False)
         self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
 
-
-        self.addNewTab()
-        self.currentWidget = self.tabWidget.currentWidget()
         
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument("-p","--path",type=str)

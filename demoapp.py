@@ -40,7 +40,10 @@ class Ui_MainWindow(object):
         self.actionOpen.setObjectName("actionOpen")
         self.actionOpen_CSV = QtGui.QAction(MainWindow)
         self.actionOpen_CSV.setObjectName("actionOpen_CSV")
+        self.actionDock = QtGui.QAction(MainWindow)
+        self.actionDock.setObjectName("actionDock")
         self.menuFile.addAction(self.actionOpen)
+        self.menuFile.addAction(self.actionDock)
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(MainWindow)
@@ -54,6 +57,7 @@ class Ui_MainWindow(object):
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.actionOpen.setText(_translate("MainWindow", "Open"))
         self.actionOpen_CSV.setText(_translate("MainWindow", "Open CSV"))
+        self.actionDock.setText(_translate("MainWindow", "Dock"))
 
 
 if __name__ == "__main__":
