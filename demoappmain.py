@@ -6,6 +6,7 @@ from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from numpy import e, mat
+from pandas.io.parsers import TextParser
 import demoapp
 import sys
 import pandas
@@ -394,8 +395,6 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.setCornerWidget(self.addNewTabButton)
         self.addNewTab()
         self.currentWidget = self.tabWidget.currentWidget()
-        self.createDock()
-
         
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument("-p","--path",type=str)
@@ -414,6 +413,8 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.currentChanged.connect(self.changeCurrentTab)
         self.actionDock.triggered.connect(self.dockVisible)
 
+        self.createDock()
+
     def fillStandardModel(self):
         with open("drzave.json","r") as f:
             data = json.load(f)
@@ -422,29 +423,29 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         standardModel.setHeaderData(1,QtCore.Qt.Orientation.Horizontal,"Population")
 
         root = standardModel.invisibleRootItem()
-        #root.setFlags(root.flags() | QtCore.Qt.ItemFlag.ItemIsUserTristate | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
 
         for continent in data['continents']:
             continentItem = QStandardItem(continent["name"])
-            #continentItem.setFlags(continentItem.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
-            #continentItem.setCheckState(QtCore.Qt.CheckState.Unchecked)
             continentItem.setEditable(False)
             
             root.appendRow(continentItem)
             for country in continent["countries"]:
                 countryItem = QStandardItem(country["name"])
                 countryItem.setEditable(False)
-                countryItem.setFlags(countryItem.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
-                countryItem.setCheckState(QtCore.Qt.CheckState.Unchecked)
+                
+                if countryItem.text() in self.currentWidget.lines:
+                    countryItem.setFlags(countryItem.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+                    countryItem.setCheckState(QtCore.Qt.CheckState.Checked)
+
                 continentItem.appendRow(countryItem)
                 gdpItem = QStandardItem(country["gdp"])
                 gdpItem.setEditable(False)
                 populationItem = QStandardItem(country["population"])
                 populationItem.setEditable(False)
-                countryItem.appendRow((gdpItem,populationItem))
-                
+                countryItem.appendRow((gdpItem,populationItem))                
         
         return standardModel
+        
 
     def dockVisible(self):
         if not self.dock.isVisible():
@@ -455,12 +456,24 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.dock = QtWidgets.QDockWidget("Tree View")
         self.dock.setWidget(self.treeView)
         self.model = self.fillStandardModel()
+        self.model.itemChanged.connect(lambda item:self.hideLineFromTree(item))
         self.treeView.setModel(self.model)
         self.treeView.expandAll()
         for i in range(self.model.columnCount()):
             self.treeView.resizeColumnToContents(i)
         self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
+
+    def hideLineFromTree(self,item):
+        #print(item.text())
+        linename = item.text()
+        if linename in self.currentWidget.lines:
+            if item.checkState() == QtCore.Qt.CheckState.Unchecked:
+                self.currentWidget.lines[linename].set_visible(False)
+                self.currentWidget.staticCanvas.draw()
+            elif item.checkState() == QtCore.Qt.CheckState.Checked:
+                self.currentWidget.lines[linename].set_visible(True)
+                self.currentWidget.staticCanvas.draw()
 
     def changeCurrentTab(self):
         self.currentWidget = self.tabWidget.currentWidget()
