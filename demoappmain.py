@@ -422,14 +422,20 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         standardModel.setHeaderData(1,QtCore.Qt.Orientation.Horizontal,"Population")
 
         root = standardModel.invisibleRootItem()
+        #root.setFlags(root.flags() | QtCore.Qt.ItemFlag.ItemIsUserTristate | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
 
         for continent in data['continents']:
             continentItem = QStandardItem(continent["name"])
+            #continentItem.setFlags(continentItem.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+            #continentItem.setCheckState(QtCore.Qt.CheckState.Unchecked)
             continentItem.setEditable(False)
+            
             root.appendRow(continentItem)
             for country in continent["countries"]:
                 countryItem = QStandardItem(country["name"])
                 countryItem.setEditable(False)
+                countryItem.setFlags(countryItem.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+                countryItem.setCheckState(QtCore.Qt.CheckState.Unchecked)
                 continentItem.appendRow(countryItem)
                 gdpItem = QStandardItem(country["gdp"])
                 gdpItem.setEditable(False)
