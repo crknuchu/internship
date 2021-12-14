@@ -412,7 +412,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
         self.actionOpen.triggered.connect(self.fileOpen)
         self.tabWidget.currentChanged.connect(self.changeCurrentTab)
-        self.actionDock.triggered.connect(self.addDock)
+        self.actionDock.triggered.connect(self.dockVisible)
 
     def fillStandardModel(self):
         with open("drzave.json","r") as f:
@@ -433,26 +433,26 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
                 countryItem.appendRow(countryData)
         
         return standardModel
-        
 
-    def addDock(self):
+    def dockVisible(self):
         if not self.dock.isVisible():
-            self.createDock()
+            self.dock.setVisible(True)
     
     def createDock(self):
         self.treeView = QtWidgets.QTreeView()
         self.dock = QtWidgets.QDockWidget("Tree View")
         self.dock.setWidget(self.treeView)
-        self.treeView.setModel(self.fillStandardModel())
+        self.model = self.fillStandardModel()
+        self.treeView.setModel(self.model)
         self.treeView.expandAll()
-        self.treeView.resizeColumnToContents(0)
+        for i in range(self.model.columnCount()):
+            self.treeView.resizeColumnToContents(i)
         self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
 
     def changeCurrentTab(self):
         self.currentWidget = self.tabWidget.currentWidget()
 
-    
     def fileOpen(self):
         filter = "Text Files,CSV Files (*.txt *.csv)"
         files,_ =  QtWidgets.QFileDialog.getOpenFileNames(self.currentTab,"","",filter)
