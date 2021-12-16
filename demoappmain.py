@@ -461,6 +461,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
             self.dock.setVisible(True)
     
     def createDock(self):
+        #creates dock and tree view inside it
         self.treeView = QtWidgets.QTreeView()
         self.dock = QtWidgets.QDockWidget("Tree View")
         self.dock.setWidget(self.treeView)
@@ -468,8 +469,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.model.itemDataChanged.connect(self.handleItemDataChanged) #event for model
         self.treeView.setModel(self.model)
         self.treeView.expandAll()
-        for i in range(self.model.columnCount()):
-            self.treeView.resizeColumnToContents(i)
+        self.treeView.header().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
         self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
 
