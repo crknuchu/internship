@@ -407,15 +407,19 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.currentWidget = self.tabWidget.currentWidget()
         
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument("-p","--path",type=str)
+        self.parser.add_argument("-p","--path",nargs="+",type=str)
         self.args = self.parser.parse_args()
-        if self.args.path:
-            try:
-                open(self.args.path,"r")
-            except:
-                print("file doesn't exist")
-                exit()
-            self.openCSVFile(self.args.path)
+        #print(self.args.path)
+        if self.args.path != None:
+            for path in self.args.path:
+                if path:
+                    try:
+                        open(path,"r")
+                    except:
+                        print("file doesn't exist")
+                        exit()
+                    self.addNewTab(path)
+                    self.openCSVFile(path)
         
         self.addNewTabButton.pressed.connect(self.addNewTab)
         self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
@@ -522,6 +526,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
     def openCSVFile(self,filename):
         #opens csv file and plots it on canvas
+        #self.addNewTab()
         self.removeTextOutput()
         self.addCanvas()
         self.drawCanvas(filename)
@@ -529,6 +534,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def drawCanvas(self,filename):
         #plots data from filename
         self.currentWidget.plot(filename)
+        #os.path.basename(filename)
 
     def removeTextOutput(self):
         self.currentWidget.tabLayout.removeWidget(self.currentWidget.textOutput)
@@ -544,10 +550,14 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def closeTab(self,index):
         self.tabWidget.removeTab(index)
 
-    def addNewTab(self):
+    def addNewTab(self,filename = None):
         self.currentTab = Tab()
-        self.tabWidget.addTab(self.currentTab,"New Tab")
+        if filename == None:
+            self.tabWidget.addTab(self.currentTab,"New Tab")
+        else:
+            self.tabWidget.addTab(self.currentTab,os.path.basename(filename))
         self.tabWidget.setCurrentWidget(self.currentTab)
+        self.currentWidget = self.currentTab
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
