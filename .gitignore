@@ -2,5 +2,6 @@ __pycache__
 loremipsum.txt
 numbers.csv
 matplotlibdemo.py
-bdp_po_godini.csv
-drzave.json
+gdp_1.csv
+gdp_2.csv
+countries.json
