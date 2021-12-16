@@ -6,6 +6,7 @@ from matplotlib.backend_bases import Event, MouseEvent
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 from numpy import e, mat
+from pandas.io.parsers import TextParser
 import demoapp
 import sys
 import pandas
@@ -380,6 +381,16 @@ class Tab(QtWidgets.QWidget):
         self.ax.set_ylabel("BDP")
         self.ax.set_title(os.path.basename(filename))
 
+#custom model class
+class Model(QStandardItemModel):
+    itemDataChanged = QtCore.Signal(object, object)
+
+    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole):
+        oldvalue = index.data(role)
+        result = super(Model, self).setData(index, value, role)
+        if result and value != oldvalue:
+            self.itemDataChanged.emit(self.itemFromIndex(index), role) #emits signal with role
+        return result
 
 class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def __init__(self):
@@ -394,19 +405,21 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.setCornerWidget(self.addNewTabButton)
         self.addNewTab()
         self.currentWidget = self.tabWidget.currentWidget()
-        self.createDock()
-
         
         self.parser = argparse.ArgumentParser()
-        self.parser.add_argument("-p","--path",type=str)
+        self.parser.add_argument("-p","--path",nargs="+",type=str)
         self.args = self.parser.parse_args()
-        if self.args.path:
-            try:
-                open(self.args.path,"r")
-            except:
-                print("file doesn't exist")
-                exit()
-            self.openCSVFile(self.args.path)
+        #print(self.args.path)
+        if self.args.path != None:
+            for path in self.args.path:
+                if path:
+                    try:
+                        open(path,"r")
+                    except:
+                        print("file doesn't exist")
+                        exit()
+                    self.addNewTab(path)
+                    self.openCSVFile(path)
         
         self.addNewTabButton.pressed.connect(self.addNewTab)
         self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
@@ -414,10 +427,12 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.currentChanged.connect(self.changeCurrentTab)
         self.actionDock.triggered.connect(self.dockVisible)
 
+        self.createDock()
+
     def fillStandardModel(self):
         with open("drzave.json","r") as f:
             data = json.load(f)
-        standardModel = QStandardItemModel(0,2,self)
+        standardModel = Model(0,2,self)
         standardModel.setHeaderData(0,QtCore.Qt.Orientation.Horizontal,"GDP per capita")
         standardModel.setHeaderData(1,QtCore.Qt.Orientation.Horizontal,"Population")
 
@@ -425,12 +440,23 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
         for continent in data['continents']:
             continentItem = QStandardItem(continent["name"])
+            continentItem.setEditable(False)
+            
             root.appendRow(continentItem)
             for country in continent["countries"]:
                 countryItem = QStandardItem(country["name"])
+                countryItem.setEditable(False)
+                
+                if countryItem.text() in self.currentWidget.lines:
+                    countryItem.setFlags(countryItem.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+                    countryItem.setCheckState(QtCore.Qt.CheckState.Checked)
+
                 continentItem.appendRow(countryItem)
-                countryData = (QStandardItem(str(country["gdp"])),QStandardItem(country["population"]))
-                countryItem.appendRow(countryData)
+                gdpItem = QStandardItem(country["gdp"])
+                gdpItem.setEditable(False)
+                populationItem = QStandardItem(country["population"])
+                populationItem.setEditable(False)
+                countryItem.appendRow((gdpItem,populationItem))                
         
         return standardModel
 
@@ -439,16 +465,33 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
             self.dock.setVisible(True)
     
     def createDock(self):
+        #creates dock and tree view inside it
         self.treeView = QtWidgets.QTreeView()
         self.dock = QtWidgets.QDockWidget("Tree View")
         self.dock.setWidget(self.treeView)
         self.model = self.fillStandardModel()
+        self.model.itemDataChanged.connect(self.handleItemDataChanged) #event for model
         self.treeView.setModel(self.model)
         self.treeView.expandAll()
-        for i in range(self.model.columnCount()):
-            self.treeView.resizeColumnToContents(i)
+        self.treeView.header().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
         self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
+
+    def handleItemDataChanged(self, item, role):
+        #select functionality based on role
+        if role == QtCore.Qt.ItemDataRole.CheckStateRole:
+            print(item.text(), item.checkState())
+            self.hideLineFromTree(item)
+
+    def hideLineFromTree(self,item):
+        #hides checked country from graph
+        linename = item.text()
+        if item.checkState() == QtCore.Qt.CheckState.Unchecked:
+            self.currentWidget.lines[linename].set_visible(False)
+            self.currentWidget.staticCanvas.draw()
+        elif item.checkState() == QtCore.Qt.CheckState.Checked:
+            self.currentWidget.lines[linename].set_visible(True)
+            self.currentWidget.staticCanvas.draw()
 
     def changeCurrentTab(self):
         self.currentWidget = self.tabWidget.currentWidget()
@@ -483,6 +526,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
     def openCSVFile(self,filename):
         #opens csv file and plots it on canvas
+        #self.addNewTab()
         self.removeTextOutput()
         self.addCanvas()
         self.drawCanvas(filename)
@@ -490,6 +534,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def drawCanvas(self,filename):
         #plots data from filename
         self.currentWidget.plot(filename)
+        #os.path.basename(filename)
 
     def removeTextOutput(self):
         self.currentWidget.tabLayout.removeWidget(self.currentWidget.textOutput)
@@ -505,10 +550,14 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def closeTab(self,index):
         self.tabWidget.removeTab(index)
 
-    def addNewTab(self):
+    def addNewTab(self,filename = None):
         self.currentTab = Tab()
-        self.tabWidget.addTab(self.currentTab,"New Tab")
+        if filename == None:
+            self.tabWidget.addTab(self.currentTab,"New Tab")
+        else:
+            self.tabWidget.addTab(self.currentTab,os.path.basename(filename))
         self.tabWidget.setCurrentWidget(self.currentTab)
+        self.currentWidget = self.currentTab
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
