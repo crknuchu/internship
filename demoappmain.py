@@ -381,6 +381,16 @@ class Tab(QtWidgets.QWidget):
         self.ax.set_ylabel("BDP")
         self.ax.set_title(os.path.basename(filename))
 
+#custom model class
+class Model(QStandardItemModel):
+    itemDataChanged = QtCore.Signal(object, object)
+
+    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole):
+        oldvalue = index.data(role)
+        result = super(Model, self).setData(index, value, role)
+        if result and value != oldvalue:
+            self.itemDataChanged.emit(self.itemFromIndex(index), role) #emits signal with role
+        return result
 
 class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def __init__(self):
@@ -418,7 +428,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def fillStandardModel(self):
         with open("drzave.json","r") as f:
             data = json.load(f)
-        standardModel = QStandardItemModel(0,2,self)
+        standardModel = Model(0,2,self)
         standardModel.setHeaderData(0,QtCore.Qt.Orientation.Horizontal,"GDP per capita")
         standardModel.setHeaderData(1,QtCore.Qt.Orientation.Horizontal,"Population")
 
@@ -445,7 +455,6 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
                 countryItem.appendRow((gdpItem,populationItem))                
         
         return standardModel
-        
 
     def dockVisible(self):
         if not self.dock.isVisible():
@@ -456,7 +465,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.dock = QtWidgets.QDockWidget("Tree View")
         self.dock.setWidget(self.treeView)
         self.model = self.fillStandardModel()
-        self.model.itemChanged.connect(lambda item:self.hideLineFromTree(item))
+        self.model.itemDataChanged.connect(self.handleItemDataChanged) #event for model
         self.treeView.setModel(self.model)
         self.treeView.expandAll()
         for i in range(self.model.columnCount()):
@@ -464,16 +473,21 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
 
+    def handleItemDataChanged(self, item, role):
+        #select functionality based on role
+        if role == QtCore.Qt.ItemDataRole.CheckStateRole:
+            print(item.text(), item.checkState())
+            self.hideLineFromTree(item)
+
     def hideLineFromTree(self,item):
-        #print(item.text())
+        #hides checked country from graph
         linename = item.text()
-        if linename in self.currentWidget.lines:
-            if item.checkState() == QtCore.Qt.CheckState.Unchecked:
-                self.currentWidget.lines[linename].set_visible(False)
-                self.currentWidget.staticCanvas.draw()
-            elif item.checkState() == QtCore.Qt.CheckState.Checked:
-                self.currentWidget.lines[linename].set_visible(True)
-                self.currentWidget.staticCanvas.draw()
+        if item.checkState() == QtCore.Qt.CheckState.Unchecked:
+            self.currentWidget.lines[linename].set_visible(False)
+            self.currentWidget.staticCanvas.draw()
+        elif item.checkState() == QtCore.Qt.CheckState.Checked:
+            self.currentWidget.lines[linename].set_visible(True)
+            self.currentWidget.staticCanvas.draw()
 
     def changeCurrentTab(self):
         self.currentWidget = self.tabWidget.currentWidget()
