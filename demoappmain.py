@@ -381,13 +381,12 @@ class Tab(QtWidgets.QWidget):
         self.ax.set_ylabel("BDP")
         self.ax.set_title(os.path.basename(filename))
 
-#custom model class
 class Model(QStandardItemModel):
     itemDataChanged = QtCore.Signal(object, object)
 
-    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole):
+    def setData(self, index, value, role=QtCore.Qt.ItemDataRole.EditRole): #called when Item changes
         oldvalue = index.data(role)
-        result = super(Model, self).setData(index, value, role)
+        result = super(Model, self).setData(index, value, role) #true if setData successful
         if result and value != oldvalue:
             self.itemDataChanged.emit(self.itemFromIndex(index), role) #emits signal with role
         return result
@@ -430,7 +429,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.createDock()
 
     def fillStandardModel(self):
-        with open("drzave.json","r") as f:
+        with open("countries.json","r") as f:
             data = json.load(f)
         standardModel = Model(0,2,self)
         standardModel.setHeaderData(0,QtCore.Qt.Orientation.Horizontal,"GDP per capita")
@@ -527,6 +526,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def openCSVFile(self,filename):
         #opens csv file and plots it on canvas
         #self.addNewTab()
+        #ovde mora da se promeni text za tab kad se otvori fajl a ne gore
         self.removeTextOutput()
         self.addCanvas()
         self.drawCanvas(filename)
@@ -550,12 +550,12 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def closeTab(self,index):
         self.tabWidget.removeTab(index)
 
-    def addNewTab(self,filename = None):
+    def addNewTab(self,tabname = None): #tabname umesto filename
         self.currentTab = Tab()
-        if filename == None:
+        if tabname == None:
             self.tabWidget.addTab(self.currentTab,"New Tab")
         else:
-            self.tabWidget.addTab(self.currentTab,os.path.basename(filename))
+            self.tabWidget.addTab(self.currentTab,os.path.basename(tabname))
         self.tabWidget.setCurrentWidget(self.currentTab)
         self.currentWidget = self.currentTab
 
