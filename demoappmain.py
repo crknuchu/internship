@@ -417,7 +417,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
                     except:
                         print("file doesn't exist")
                         exit()
-                    self.addNewTab(path)
+                    self.addNewTab()
                     self.openCSVFile(path)
         
         self.addNewTabButton.pressed.connect(self.addNewTab)
@@ -530,6 +530,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.removeTextOutput()
         self.addCanvas()
         self.drawCanvas(filename)
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.currentWidget),os.path.basename(filename))
 
     def drawCanvas(self,filename):
         #plots data from filename
@@ -550,12 +551,9 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def closeTab(self,index):
         self.tabWidget.removeTab(index)
 
-    def addNewTab(self,tabname = None): #tabname umesto filename
+    def addNewTab(self): #tabname umesto filename
         self.currentTab = Tab()
-        if tabname == None:
-            self.tabWidget.addTab(self.currentTab,"New Tab")
-        else:
-            self.tabWidget.addTab(self.currentTab,os.path.basename(tabname))
+        self.tabWidget.addTab(self.currentTab,"New Tab")
         self.tabWidget.setCurrentWidget(self.currentTab)
         self.currentWidget = self.currentTab
 
