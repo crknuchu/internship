@@ -187,6 +187,7 @@ class Tab(QtWidgets.QWidget):
         self.markers = {} #name of marker : Marker Object
         self.lines = {} #name of line : MainLine object
         self.current_marker = None
+        self.model = None
 
     def on_release(self,event):
         self.current_marker = None
@@ -404,6 +405,8 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.setCornerWidget(self.addNewTabButton)
         self.addNewTab()
         self.currentWidget = self.tabWidget.currentWidget()
+
+        self.createDock()
         
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument("-p","--path",nargs="+",type=str)
@@ -426,7 +429,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.currentChanged.connect(self.changeCurrentTab)
         self.actionDock.triggered.connect(self.dockVisible)
 
-        self.createDock()
+       
 
     def fillStandardModel(self):
         with open("countries.json","r") as f:
@@ -441,21 +444,26 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
             continentItem = QStandardItem(continent["name"])
             continentItem.setEditable(False)
             
-            root.appendRow(continentItem)
             for country in continent["countries"]:
                 countryItem = QStandardItem(country["name"])
                 countryItem.setEditable(False)
                 
                 if countryItem.text() in self.currentWidget.lines:
                     countryItem.setFlags(countryItem.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
-                    countryItem.setCheckState(QtCore.Qt.CheckState.Checked)
+                    if self.currentWidget.lines[countryItem.text()].get_visible():
+                        countryItem.setCheckState(QtCore.Qt.CheckState.Checked)
+                    else:
+                        countryItem.setCheckState(QtCore.Qt.CheckState.Unchecked)
 
-                continentItem.appendRow(countryItem)
-                gdpItem = QStandardItem(country["gdp"])
-                gdpItem.setEditable(False)
-                populationItem = QStandardItem(country["population"])
-                populationItem.setEditable(False)
-                countryItem.appendRow((gdpItem,populationItem))                
+                    continentItem.appendRow(countryItem)
+                    gdpItem = QStandardItem(country["gdp"])
+                    gdpItem.setEditable(False)
+                    populationItem = QStandardItem(country["population"])
+                    populationItem.setEditable(False)
+                    countryItem.appendRow((gdpItem,populationItem))
+            
+            if continentItem.hasChildren():
+                root.appendRow(continentItem)  
         
         return standardModel
 
@@ -468,18 +476,21 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.treeView = QtWidgets.QTreeView()
         self.dock = QtWidgets.QDockWidget("Tree View")
         self.dock.setWidget(self.treeView)
-        self.model = self.fillStandardModel()
-        self.model.itemDataChanged.connect(self.handleItemDataChanged) #event for model
-        self.treeView.setModel(self.model)
-        self.treeView.expandAll()
-        self.treeView.header().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.updateTreeView()
         self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
+    
+    def updateTreeView(self):
+        self.currentWidget.model = self.fillStandardModel()
+        self.currentWidget.model.itemDataChanged.connect(self.handleItemDataChanged) #event for model
+        self.treeView.setModel(self.currentWidget.model)
+        self.treeView.expandAll()
+        self.treeView.header().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
 
     def handleItemDataChanged(self, item, role):
         #select functionality based on role
         if role == QtCore.Qt.ItemDataRole.CheckStateRole:
-            print(item.text(), item.checkState())
+            #print(item.text(), item.checkState())
             self.hideLineFromTree(item)
 
     def hideLineFromTree(self,item):
@@ -494,6 +505,8 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
     def changeCurrentTab(self):
         self.currentWidget = self.tabWidget.currentWidget()
+        #print(self.currentWidget.model)
+        self.updateTreeView()
 
     def fileOpen(self):
         filter = "Text Files,CSV Files (*.txt *.csv)"
@@ -528,9 +541,11 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         #self.addNewTab()
         #ovde mora da se promeni text za tab kad se otvori fajl a ne gore
         self.removeTextOutput()
+        #self.removeCanvas()
         self.addCanvas()
         self.drawCanvas(filename)
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.currentWidget),os.path.basename(filename))
+        self.updateTreeView()
 
     def drawCanvas(self,filename):
         #plots data from filename
