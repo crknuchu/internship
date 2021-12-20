@@ -428,7 +428,6 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument("-p","--path",nargs="+",type=str)
         self.args = self.parser.parse_args()
-        #print(self.args.path)
         if self.args.path != None:
             for path in self.args.path:
                 if path:
@@ -499,7 +498,6 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def handleItemDataChanged(self, item, role):
         #select functionality based on role
         if role == QtCore.Qt.ItemDataRole.CheckStateRole:
-            #print(item.text(), item.checkState())
             self.hideLineFromTree(item)
 
     def hideLineFromTree(self,item):
@@ -514,7 +512,6 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
     def changeCurrentTab(self):
         self.currentWidget = self.tabWidget.currentWidget()
-        #print(self.currentWidget.model)
         self.updateTreeView()
 
     def fileOpen(self):
@@ -547,11 +544,8 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
 
     def openCSVFile(self,filename):
         #opens csv file and plots it on canvas
-        #self.addNewTab()
-        
         self.addNewTab()
         self.removeTextOutput()
-        #self.removeCanvas()
         self.addCanvas()
         self.drawCanvas(filename)
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.currentWidget),os.path.basename(filename))
@@ -560,7 +554,6 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def drawCanvas(self,filename):
         #plots data from filename
         self.currentWidget.plot(filename)
-        #os.path.basename(filename)
 
     def removeTextOutput(self):
         self.currentWidget.tabLayout.removeWidget(self.currentWidget.textOutput)
