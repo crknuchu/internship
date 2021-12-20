@@ -397,6 +397,21 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         super().__init__()
         self.setupUi(self)
 
+        self.initializeMainWindow()
+        self.connectMainWindow()
+        
+        for path in self.parserargs():
+            self.openCSVFile(path)
+        
+        
+    def connectMainWindow(self):
+        self.addNewTabButton.pressed.connect(self.addNewTab)
+        self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
+        self.actionOpen.triggered.connect(self.fileOpen)
+        self.tabWidget.currentChanged.connect(self.changeCurrentTab)
+        self.actionDock.triggered.connect(self.dockVisible)
+    
+    def initializeMainWindow(self):
         self.tabWidget.removeTab(1) #remove the 2 default tabs from qt designer
         self.tabWidget.removeTab(0)
         self.tabWidget.setTabsClosable(True)
@@ -405,9 +420,10 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.tabWidget.setCornerWidget(self.addNewTabButton)
         self.addNewTab()
         self.currentWidget = self.tabWidget.currentWidget()
-
         self.createDock()
-        
+
+    def parserargs(self):
+        args = []
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument("-p","--path",nargs="+",type=str)
         self.args = self.parser.parse_args()
@@ -415,19 +431,9 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         if self.args.path != None:
             for path in self.args.path:
                 if path:
-                    try:
-                        open(path,"r")
-                    except:
-                        print("file doesn't exist")
-                        exit()
-                    self.addNewTab()
-                    self.openCSVFile(path)
-        
-        self.addNewTabButton.pressed.connect(self.addNewTab)
-        self.tabWidget.tabCloseRequested.connect(lambda index: self.closeTab(index))
-        self.actionOpen.triggered.connect(self.fileOpen)
-        self.tabWidget.currentChanged.connect(self.changeCurrentTab)
-        self.actionDock.triggered.connect(self.dockVisible)
+                    if os.path.isfile(path):
+                        args.append(path)
+        return args
 
        
 
@@ -539,7 +545,8 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
     def openCSVFile(self,filename):
         #opens csv file and plots it on canvas
         #self.addNewTab()
-        #ovde mora da se promeni text za tab kad se otvori fajl a ne gore
+        
+        self.addNewTab()
         self.removeTextOutput()
         #self.removeCanvas()
         self.addCanvas()
