@@ -423,6 +423,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.createDock()
 
     def parserargs(self):
+        #returns list of arguments from command line
         args = []
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument("-p","--path",nargs="+",type=str)
@@ -435,9 +436,8 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
                         args.append(path)
         return args
 
-       
-
     def fillStandardModel(self):
+        #makes and returns model for treeView
         with open("countries.json","r") as f:
             data = json.load(f)
         standardModel = Model(0,2,self)
@@ -482,13 +482,16 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.treeView = QtWidgets.QTreeView()
         self.dock = QtWidgets.QDockWidget("Tree View")
         self.dock.setWidget(self.treeView)
-        self.updateTreeView()
+        self.createTreeView()
         self.dock.setAllowedAreas(QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea,self.dock)
     
-    def updateTreeView(self):
+    def createTreeView(self):
         self.currentWidget.model = self.fillStandardModel()
         self.currentWidget.model.itemDataChanged.connect(self.handleItemDataChanged) #event for model
+        self.updateTreeView()    
+    
+    def updateTreeView(self):
         self.treeView.setModel(self.currentWidget.model)
         self.treeView.expandAll()
         self.treeView.header().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
@@ -552,7 +555,7 @@ class MainWindow(demoapp.Ui_MainWindow,QtWidgets.QMainWindow):
         self.addCanvas()
         self.drawCanvas(filename)
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.currentWidget),os.path.basename(filename))
-        self.updateTreeView()
+        self.createTreeView()
 
     def drawCanvas(self,filename):
         #plots data from filename
