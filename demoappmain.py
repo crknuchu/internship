@@ -168,7 +168,15 @@ class Tab(QtWidgets.QWidget):
 
         self.createWidgets()        
         self.addWidgetsToLayout()
+        self.connectTab()
 
+        self.ax = self.staticCanvas.figure.subplots()
+        self.markers = {} #name of marker : Marker Object
+        self.lines = {} #name of line : MainLine object
+        self.current_marker = None
+        self.model = None
+
+    def connectTab(self):
         self.textInput.returnPressed.connect(lambda: self.returnPressed(self.textInput.text()))
         self.clearButton.pressed.connect(self.clearPressed)
         self.checkBox.toggled.connect(self.disableDropDownMenu)
@@ -181,13 +189,6 @@ class Tab(QtWidgets.QWidget):
         self.staticCanvas.mpl_connect('button_release_event', self.on_release)
         self.staticCanvas.mpl_connect('motion_notify_event', self.on_motion)
         self.staticCanvas.mpl_connect('pick_event', self.pick_event)
-
-        self.ax = self.staticCanvas.figure.subplots()
-
-        self.markers = {} #name of marker : Marker Object
-        self.lines = {} #name of line : MainLine object
-        self.current_marker = None
-        self.model = None
 
     def on_release(self,event):
         self.current_marker = None
